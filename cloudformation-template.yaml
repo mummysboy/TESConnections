@@ -1,0 +1,329 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'TESConnections Landing Page Infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'dev'
+    AllowedValues: ['dev', 'staging', 'prod']
+    Description: 'Environment name'
+
+Resources:
+  # DynamoDB Table
+  ConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'tes-connections-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: StatusCreatedAtIndex
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: TESConnections
+
+  # Lambda Execution Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'tes-connections-lambda-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt ConnectionsTable.Arn
+                  - !Sub '${ConnectionsTable.Arn}/index/*'
+        - PolicyName: SNSPublish
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: '*'
+
+  # Lambda Function
+  FormSubmissionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'tes-connections-form-handler-${Environment}'
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import uuid
+          from datetime import datetime
+          from botocore.exceptions import ClientError
+          import os
+          
+          # Initialize DynamoDB
+          dynamodb = boto3.resource('dynamodb')
+          table_name = os.environ.get('DYNAMODB_TABLE', 'tes-connections')
+          table = dynamodb.Table(table_name)
+          
+          def lambda_handler(event, context):
+              headers = {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                  'Access-Control-Allow-Methods': 'POST,OPTIONS'
+              }
+              
+              if event['httpMethod'] == 'OPTIONS':
+                  return {
+                      'statusCode': 200,
+                      'headers': headers,
+                      'body': json.dumps({'message': 'CORS preflight successful'})
+                  }
+              
+              try:
+                  if isinstance(event['body'], str):
+                      body = json.loads(event['body'])
+                  else:
+                      body = event['body']
+                  
+                  required_fields = ['name', 'communication']
+                  for field in required_fields:
+                      if field not in body or not body[field].strip():
+                          return {
+                              'statusCode': 400,
+                              'headers': headers,
+                              'body': json.dumps({
+                                  'error': f'Missing required field: {field}',
+                                  'message': 'Please fill in all required fields'
+                              })
+                          }
+                  
+                  valid_communication_methods = ['telegram', 'email', 'teams', 'whatsapp']
+                  if body['communication'] not in valid_communication_methods:
+                      return {
+                          'statusCode': 400,
+                          'headers': headers,
+                          'body': json.dumps({
+                              'error': 'Invalid communication method',
+                              'message': 'Please select a valid communication method'
+                          })
+                      }
+                  
+                  submission_id = str(uuid.uuid4())
+                  
+                  item = {
+                      'id': submission_id,
+                      'name': body['name'].strip(),
+                      'communication': body['communication'],
+                      'info': body.get('info', '').strip(),
+                      'comments': body.get('comments', '').strip(),
+                      'timestamp': body.get('timestamp', datetime.utcnow().isoformat()),
+                      'userAgent': body.get('userAgent', ''),
+                      'referrer': body.get('referrer', ''),
+                      'ipAddress': event.get('requestContext', {}).get('identity', {}).get('sourceIp', ''),
+                      'createdAt': datetime.utcnow().isoformat(),
+                      'status': 'new'
+                  }
+                  
+                  table.put_item(Item=item)
+                  
+                  return {
+                      'statusCode': 200,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'message': 'Form submitted successfully',
+                          'submissionId': submission_id,
+                          'timestamp': item['createdAt']
+                      })
+                  }
+                  
+              except Exception as e:
+                  print(f"Error: {e}")
+                  return {
+                      'statusCode': 500,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'error': 'Internal server error',
+                          'message': 'Something went wrong. Please try again later.'
+                      })
+                  }
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref ConnectionsTable
+      Timeout: 30
+      MemorySize: 256
+
+  # API Gateway
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'tes-connections-api-${Environment}'
+      Description: 'API Gateway for TESConnections form submissions'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resource
+  ApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: submit-contact
+
+  # API Gateway Method
+  ApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # OPTIONS Method for CORS
+  ApiOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+            ResponseTemplates:
+              application/json: ''
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # Lambda Permission for API Gateway
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref FormSubmissionLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*'
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ApiMethod
+      - ApiOptionsMethod
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: !Ref Environment
+
+  # S3 Bucket for Static Website
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'tes-connections-website-${Environment}-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: TESConnections
+
+  # S3 Bucket Policy
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub '${WebsiteBucket}/*'
+
+Outputs:
+  ApiGatewayUrl:
+    Description: 'API Gateway URL for form submissions'
+    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/submit-contact'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+
+  WebsiteUrl:
+    Description: 'S3 Website URL'
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Export:
+      Name: !Sub '${AWS::StackName}-WebsiteUrl'
+
+  DynamoDBTableName:
+    Description: 'DynamoDB Table Name'
+    Value: !Ref ConnectionsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-TableName'
+
+  LambdaFunctionArn:
+    Description: 'Lambda Function ARN'
+    Value: !GetAtt FormSubmissionLambda.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaArn'

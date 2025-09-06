@@ -1,0 +1,35 @@
+{
+  "name": "tes-connections",
+  "version": "1.0.0",
+  "description": "TESConnections landing page with AWS backend",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "deploy": "aws s3 sync . s3://tes-connections-website-prod-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
+    "deploy-dev": "aws s3 sync . s3://tes-connections-website-dev-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
+    "build": "echo 'No build step required for static site'",
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": [
+    "landing-page",
+    "contact-form",
+    "aws",
+    "mobile-first",
+    "responsive",
+    "hinge-style",
+    "masculine-theme"
+  ],
+  "author": "TESConnections Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mummysboy/TESConnections.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mummysboy/TESConnections/issues"
+  },
+  "homepage": "https://github.com/mummysboy/TESConnections#readme"
+}
