@@ -7,7 +7,7 @@
     "start": "python -m http.server 8000",
     "deploy": "aws s3 sync . s3://tes-connections-website-prod-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
     "deploy-dev": "aws s3 sync . s3://tes-connections-website-dev-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
-    "build": "echo 'No build step required for static site'",
+    "build": "mkdir -p dist && cp index.html styles.css script.js tes-affiliate-conferences-2025-568x379.jpg dist/",
     "test": "echo 'No tests configured'"
   },
   "keywords": [
