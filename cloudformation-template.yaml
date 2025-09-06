@@ -237,15 +237,9 @@ Resources:
       HttpMethod: OPTIONS
       AuthorizationType: NONE
       Integration:
-        Type: MOCK
-        IntegrationResponses:
-          - StatusCode: 200
-            ResponseParameters:
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-            ResponseTemplates:
-              application/json: ''
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
       MethodResponses:
         - StatusCode: 200
           ResponseParameters:
@@ -301,7 +295,7 @@ Resources:
           - Effect: Allow
             Principal: '*'
             Action: s3:GetObject
-            Resource: !Sub '${WebsiteBucket}/*'
+            Resource: !Sub '${WebsiteBucket.Arn}/*'
 
 Outputs:
   ApiGatewayUrl:

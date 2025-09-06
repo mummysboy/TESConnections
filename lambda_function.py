@@ -15,8 +15,8 @@ def lambda_handler(event, context):
     AWS Lambda function to handle form submissions and store data in DynamoDB
     """
     
-    # Set CORS headers
-    headers = {
+    # Set CORS headers for all responses
+    cors_headers = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
@@ -27,7 +27,7 @@ def lambda_handler(event, context):
     if event['httpMethod'] == 'OPTIONS':
         return {
             'statusCode': 200,
-            'headers': headers,
+            'headers': cors_headers,
             'body': json.dumps({'message': 'CORS preflight successful'})
         }
     
@@ -44,7 +44,7 @@ def lambda_handler(event, context):
             if field not in body or not body[field].strip():
                 return {
                     'statusCode': 400,
-                    'headers': headers,
+                    'headers': cors_headers,
                     'body': json.dumps({
                         'error': f'Missing required field: {field}',
                         'message': 'Please fill in all required fields'
@@ -56,7 +56,7 @@ def lambda_handler(event, context):
         if body['communication'] not in valid_communication_methods:
             return {
                 'statusCode': 400,
-                'headers': headers,
+                'headers': cors_headers,
                 'body': json.dumps({
                     'error': 'Invalid communication method',
                     'message': 'Please select a valid communication method'
@@ -92,7 +92,7 @@ def lambda_handler(event, context):
         
         return {
             'statusCode': 200,
-            'headers': headers,
+            'headers': cors_headers,
             'body': json.dumps({
                 'message': 'Form submitted successfully',
                 'submissionId': submission_id,
@@ -103,7 +103,7 @@ def lambda_handler(event, context):
     except json.JSONDecodeError:
         return {
             'statusCode': 400,
-            'headers': headers,
+            'headers': cors_headers,
             'body': json.dumps({
                 'error': 'Invalid JSON',
                 'message': 'Please check your form data'
@@ -114,7 +114,7 @@ def lambda_handler(event, context):
         print(f"DynamoDB error: {e}")
         return {
             'statusCode': 500,
-            'headers': headers,
+            'headers': cors_headers,
             'body': json.dumps({
                 'error': 'Database error',
                 'message': 'Unable to save your information. Please try again.'
@@ -125,7 +125,7 @@ def lambda_handler(event, context):
         print(f"Unexpected error: {e}")
         return {
             'statusCode': 500,
-            'headers': headers,
+            'headers': cors_headers,
             'body': json.dumps({
                 'error': 'Internal server error',
                 'message': 'Something went wrong. Please try again later.'

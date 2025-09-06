@@ -17,6 +17,13 @@
                     <div class="logo-icon">⚡</div>
                     <span class="logo-text">TESConnections</span>
                 </div>
+                <div class="header-menu">
+                    <button class="hamburger-menu" id="hamburgerMenu">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                </div>
             </div>
         </nav>
 
@@ -155,22 +162,41 @@
             <!-- Success Card -->
             <div class="success-card" id="successMessage" style="display: none;">
                 <div class="success-content">
-                    <div class="success-icon">🎯</div>
-                    <h3 class="success-title">Connection Made!</h3>
-                    <p class="success-subtitle">We'll be in touch within 24 hours. Get ready for something great.</p>
-                    <div class="success-stats">
-                        <div class="success-stat">
-                            <span class="stat-icon">⚡</span>
-                            <span class="stat-text">Fast Response</span>
-                        </div>
-                        <div class="success-stat">
-                            <span class="stat-icon">🎯</span>
-                            <span class="stat-text">Quality Match</span>
-                        </div>
+                    <div class="success-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="success-title">Connection Successful</h3>
+                    <p class="success-subtitle">Let's make some money!</p>
                     </div>
                 </div>
             </div>
         </main>
+
+        <!-- About Us Modal -->
+        <div class="modal-overlay" id="aboutModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">About Us</h3>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="about-section">
+                        <h4 class="about-title">Company: Tris</h4>
+                        <p class="about-description">
+                            Tris is a leading technology solutions company specializing in innovative business connections and strategic partnerships. We focus on creating meaningful relationships between industry leaders and emerging opportunities, driving growth and success across various sectors.
+                        </p>
+                    </div>
+                    <div class="about-section">
+                        <h4 class="about-title">Account Manager: Isaac Hirsch</h4>
+                        <p class="about-description">
+                            Isaac Hirsch is a seasoned account manager with extensive experience in business development and client relations. With a proven track record of successful partnerships and a deep understanding of market dynamics, Isaac ensures every connection leads to mutual success and long-term value creation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Footer -->
         <footer class="app-footer">

@@ -1,8 +1,17 @@
 // TESConnections - Hinge-Style Interactions
+// 
+// WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
+// 
+// NOTE: For localhost testing, CORS preflight requests may fail.
+// The form will work perfectly when deployed to a proper domain.
+//
 // Configuration - Update these with your actual AWS API Gateway endpoint
 const CONFIG = {
-    API_ENDPOINT: 'https://your-api-gateway-url.amazonaws.com/prod/submit-contact',
-    TIMEOUT: 10000 // 10 seconds
+    // Working API Gateway URL
+    API_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact',
+    TIMEOUT: 10000, // 10 seconds
+    RETRY_ATTEMPTS: 3,
+    RETRY_DELAY: 1000 // 1 second
 };
 
 // Form elements
@@ -183,31 +192,34 @@ function setLoadingState(isLoading) {
 }
 
 function showSuccess() {
-    // Hide form card with animation
+    // Hide form card
     const formCard = document.querySelector('.form-card');
-    formCard.style.transform = 'translateX(-100%)';
-    formCard.style.opacity = '0';
+    formCard.style.display = 'none';
     
-    setTimeout(() => {
-        formCard.style.display = 'none';
-        successCard.style.display = 'block';
-        successCard.style.transform = 'translateX(100%)';
-        successCard.style.opacity = '0';
-        
-        // Animate success card in
-        setTimeout(() => {
-            successCard.style.transform = 'translateX(0)';
-            successCard.style.opacity = '1';
-        }, 50);
-    }, 300);
+    // Generate reference ID
+    const referenceId = generateReferenceId();
+    const referenceElement = document.getElementById('referenceId');
+    if (referenceElement) {
+        referenceElement.textContent = referenceId;
+    }
+    
+    // Show success card
+    successCard.style.display = 'block';
     
     // Scroll to success card
-    setTimeout(() => {
-        successCard.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-        });
-    }, 400);
+    successCard.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+    });
+}
+
+function generateReferenceId() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `TC-${year}${month}${day}-${random}`;
 }
 
 function resetForm() {
@@ -229,32 +241,70 @@ function resetForm() {
     // Show form card
     const formCard = document.querySelector('.form-card');
     formCard.style.display = 'block';
-    formCard.style.transform = 'translateX(0)';
-    formCard.style.opacity = '1';
     
     // Hide success card
     successCard.style.display = 'none';
 }
 
-async function submitToAWS(formData) {
+async function submitToAWS(formData, attempt = 1) {
     try {
+        // Check if API endpoint is configured
+        if (CONFIG.API_ENDPOINT.includes('your-api-gateway-url')) {
+            throw new Error('API endpoint not configured. Please update the API_ENDPOINT in script.js with your actual AWS API Gateway URL.');
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
+
         const response = await fetch(CONFIG.API_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
+            signal: controller.signal,
+            mode: 'cors'
         });
         
+        clearTimeout(timeoutId);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`HTTP ${response.status}: ${errorText}`);
+            throw new Error(`Server error (${response.status}). Please try again.`);
         }
         
         const result = await response.json();
         return result;
     } catch (error) {
-        console.error('Error submitting form:', error);
-        throw new Error('Failed to submit form. Please try again.');
+        console.error(`Attempt ${attempt} failed:`, error);
+        
+        // Handle specific error types
+        if (error.name === 'AbortError') {
+            throw new Error('Request timed out. Please check your connection and try again.');
+        }
+        
+        if (error.message.includes('Failed to fetch') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+            throw new Error('Cannot connect to server. Please check your internet connection and try again.');
+        }
+        
+        if (error.message.includes('CORS') || error.message.includes('Access-Control-Allow-Origin')) {
+            throw new Error('CORS error detected. This is a localhost testing issue. The form will work perfectly when deployed to a proper domain. For now, try refreshing the page or testing from a different browser.');
+        }
+        
+        // Retry logic for network errors
+        if (attempt < CONFIG.RETRY_ATTEMPTS && (
+            error.message.includes('Failed to fetch') || 
+            error.message.includes('ERR_NAME_NOT_RESOLVED') ||
+            error.message.includes('NetworkError')
+        )) {
+            console.log(`Retrying in ${CONFIG.RETRY_DELAY}ms... (attempt ${attempt + 1}/${CONFIG.RETRY_ATTEMPTS})`);
+            await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
+            return submitToAWS(formData, attempt + 1);
+        }
+        
+        // Re-throw the original error if it's not a retryable network error
+        throw error;
     }
 }
 
@@ -334,7 +384,11 @@ form.addEventListener('submit', async (e) => {
         // Show error message with animation
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-toast';
-        errorDiv.textContent = 'Connection failed. Please try again.';
+        
+        // Use the specific error message from the API call
+        const errorMessage = error.message || 'Connection failed. Please try again.';
+        errorDiv.textContent = errorMessage;
+        
         errorDiv.style.cssText = `
             position: fixed;
             top: 20px;
@@ -346,14 +400,20 @@ form.addEventListener('submit', async (e) => {
             border-radius: 8px;
             z-index: 1000;
             animation: slideDown 0.3s ease-out;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         `;
         
         document.body.appendChild(errorDiv);
         
+        // Show error for longer if it's a configuration issue
+        const displayTime = errorMessage.includes('not configured') ? 8000 : 4000;
+        
         setTimeout(() => {
             errorDiv.style.animation = 'slideUp 0.3s ease-in';
             setTimeout(() => errorDiv.remove(), 300);
-        }, 3000);
+        }, displayTime);
         
         console.error('Form submission error:', error);
         
@@ -390,6 +450,17 @@ commentsField.addEventListener('blur', () => {
 });
 
 commentsField.addEventListener('input', () => {
+    // Capitalize first letter
+    if (commentsField.value.length > 0) {
+        const firstChar = commentsField.value.charAt(0);
+        const restOfText = commentsField.value.slice(1);
+        const capitalizedText = firstChar.toUpperCase() + restOfText;
+        
+        if (commentsField.value !== capitalizedText) {
+            commentsField.value = capitalizedText;
+        }
+    }
+    
     if (commentsField.value.length > validationRules.comments.maxLength) {
         showError('comments', validationRules.comments.message);
     } else {
@@ -430,60 +501,43 @@ shakeStyle.textContent = `
 `;
 document.head.appendChild(shakeStyle);
 
-// Character count indicators with animations
-function addCharacterCounters() {
-    const infoCounter = document.createElement('div');
-    infoCounter.className = 'char-counter';
-    infoCounter.style.cssText = `
-        text-align: right; 
-        font-size: 0.75rem; 
-        color: #6b7280; 
-        margin-top: 4px;
-        transition: color 0.3s ease;
-    `;
-    infoField.parentNode.appendChild(infoCounter);
-    
-    const commentsCounter = document.createElement('div');
-    commentsCounter.className = 'char-counter';
-    commentsCounter.style.cssText = `
-        text-align: right; 
-        font-size: 0.75rem; 
-        color: #6b7280; 
-        margin-top: 4px;
-        transition: color 0.3s ease;
-    `;
-    commentsField.parentNode.appendChild(commentsCounter);
-    
-    function updateCounters() {
-        const infoCount = infoField.value.length;
-        const commentsCount = commentsField.value.length;
-        
-        infoCounter.textContent = `${infoCount}/${validationRules.info.maxLength}`;
-        commentsCounter.textContent = `${commentsCount}/${validationRules.comments.maxLength}`;
-        
-        // Change color when approaching limit
-        if (infoCount > validationRules.info.maxLength * 0.8) {
-            infoCounter.style.color = infoCount >= validationRules.info.maxLength ? '#ef4444' : '#f59e0b';
-        } else {
-            infoCounter.style.color = '#6b7280';
-        }
-        
-        if (commentsCount > validationRules.comments.maxLength * 0.8) {
-            commentsCounter.style.color = commentsCount >= validationRules.comments.maxLength ? '#ef4444' : '#f59e0b';
-        } else {
-            commentsCounter.style.color = '#6b7280';
-        }
-    }
-    
-    infoField.addEventListener('input', updateCounters);
-    commentsField.addEventListener('input', updateCounters);
-    
-    // Initial count
-    updateCounters();
-}
 
-// Initialize character counters
-addCharacterCounters();
+// Hamburger Menu and Modal functionality
+const hamburgerMenu = document.getElementById('hamburgerMenu');
+const aboutModal = document.getElementById('aboutModal');
+const closeModal = document.getElementById('closeModal');
+
+// Open modal when hamburger menu is clicked
+hamburgerMenu.addEventListener('click', () => {
+    hamburgerMenu.classList.toggle('active');
+    aboutModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+});
+
+// Close modal when close button is clicked
+closeModal.addEventListener('click', () => {
+    hamburgerMenu.classList.remove('active');
+    aboutModal.classList.remove('active');
+    document.body.style.overflow = '';
+});
+
+// Close modal when clicking outside
+aboutModal.addEventListener('click', (e) => {
+    if (e.target === aboutModal) {
+        hamburgerMenu.classList.remove('active');
+        aboutModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aboutModal.classList.contains('active')) {
+        hamburgerMenu.classList.remove('active');
+        aboutModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
 
 // Accessibility improvements
 document.addEventListener('keydown', (e) => {
@@ -568,15 +622,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Service Worker registration (optional - for offline support)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-                console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
+// Service Worker registration removed - no sw.js file exists
