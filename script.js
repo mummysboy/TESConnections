@@ -645,3 +645,113 @@ observer.observe(element);
 });
 
 // Service Worker registration removed - no sw.js file exists
+
+// Deep link helpers to open selected contact app with provided info
+function buildContactAppLink(method, rawInfo, name, comments) {
+    if (!method || !rawInfo) return null;
+    const info = rawInfo.trim();
+    const encodedMessage = encodeURIComponent(`Hi, I'm ${name || ''}. ${comments || ''}`.trim());
+
+    // If user provided a full URL, prefer opening it directly
+    if (/^https?:\/\//i.test(info) || /^(tg|whatsapp|mailto|msteams):/i.test(info)) {
+        return info;
+    }
+
+    if (method === 'telegram') {
+        // Accept formats: @username, username, t.me/username
+        const username = info.replace(/^@/, '').replace(/^.*t\.me\//i, '').trim();
+        if (!username) return null;
+        // Use https link for broader compatibility
+        return `https://t.me/${encodeURIComponent(username)}`;
+    }
+
+    if (method === 'whatsapp') {
+        // Strip non-digits except leading +
+        let phone = info.replace(/[^\d+]/g, '');
+        // wa.me requires no plus sign
+        const waPhone = phone.replace(/^\+/, '');
+        return `https://wa.me/${waPhone}${encodedMessage ? `?text=${encodedMessage}` : ''}`;
+    }
+
+    if (method === 'email') {
+        const subject = encodeURIComponent('TESConnections');
+        const body = encodeURIComponent(`Name: ${name || ''}\n${comments || ''}`.trim());
+        return `mailto:${encodeURIComponent(info)}?subject=${subject}${body ? `&body=${body}` : ''}`;
+    }
+
+    if (method === 'teams') {
+        // Teams chat deep link to a user by email
+        const base = 'https://teams.microsoft.com/l/chat/0/0';
+        const users = encodeURIComponent(info);
+        return `${base}?users=${users}${encodedMessage ? `&message=${encodedMessage}` : ''}`;
+    }
+
+    return null;
+}
+
+function openSelectedContactApp() {
+    const method = communicationField.value;
+    const info = infoField.value;
+    const link = buildContactAppLink(method, info, nameField.value, commentsField.value);
+    if (!method) {
+        showError('communication', validationRules.communication.message);
+        return;
+    }
+    if (!info) {
+        showError('info', 'Please provide contact details');
+        return;
+    }
+    if (!link) return;
+    // Prefer opening in same tab for deep links on mobile; fallback to new tab for web URLs
+    if (/^(tg|whatsapp|mailto|msteams):/i.test(link)) {
+        window.location.href = link;
+    } else {
+        window.open(link, '_blank');
+    }
+}
+
+// Inject a small "Open" button inside the Contact details field and wire label click
+document.addEventListener('DOMContentLoaded', () => {
+    const infoWrapper = infoField && infoField.parentElement;
+    if (infoWrapper) {
+        const openBtn = document.createElement('button');
+        openBtn.type = 'button';
+        openBtn.className = 'open-contact-btn';
+        openBtn.textContent = 'Open';
+        openBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openSelectedContactApp();
+        });
+        infoWrapper.appendChild(openBtn);
+
+        // Minimal styling for the button
+        const openBtnStyle = document.createElement('style');
+        openBtnStyle.textContent = `
+            .open-contact-btn {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: #1f2937;
+                color: #fff;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+            .open-contact-btn:hover { background: #374151; }
+            .input-wrapper { position: relative; }
+        `;
+        document.head.appendChild(openBtnStyle);
+    }
+
+    const infoLabel = document.querySelector('label[for="info"]');
+    if (infoLabel) {
+        infoLabel.addEventListener('click', (e) => {
+            // Do not focus, open the selected app instead
+            e.preventDefault();
+            openSelectedContactApp();
+        });
+    }
+});
