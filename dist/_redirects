@@ -1,0 +1,11 @@
+# Redirect rules for TESConnections
+# Ensure HTML files are served correctly
+
+# Admin dashboard
+/admin.html /admin.html 200
+
+# Meetings page  
+/meetings.html /meetings.html 200
+
+# Fallback for SPA routing (if needed)
+/* /index.html 200
