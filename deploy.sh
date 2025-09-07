@@ -179,10 +179,9 @@ show_summary() {
     echo -e "   Lambda: ${GREEN}https://console.aws.amazon.com/lambda/home?region=$AWS_REGION#/functions${NC}"
     echo ""
     echo -e "${YELLOW}💡 Next Steps:${NC}"
-    echo -e "   1. Test the form submission on your website"
-    echo -e "   2. Check DynamoDB for stored submissions"
-    echo -e "   3. Monitor CloudWatch logs for any issues"
-    echo -e "   4. Set up monitoring and alerts as needed"
+    echo -e "   1. Check DynamoDB for stored submissions"
+    echo -e "   2. Monitor CloudWatch logs for any issues"
+    echo -e "   3. Set up monitoring and alerts as needed"
     echo ""
 }
 

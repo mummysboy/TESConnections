@@ -44,21 +44,6 @@ The production environment consists of:
 - `deploy.sh`: Automated deployment script
 - `package.json`: Node.js dependencies and scripts
 
-## Testing
-
-### Local Testing
-1. Start local server
-2. Open browser to `http://localhost:8000`
-3. Fill out form and submit
-4. Check browser console for errors
-
-### Production Testing
-1. Deploy using `./deploy.sh prod`
-2. Visit the website URL from deployment output
-3. Submit test form
-4. Check DynamoDB for stored data
-5. Review CloudWatch logs for any errors
-
 ## Monitoring
 
 ### CloudWatch Metrics

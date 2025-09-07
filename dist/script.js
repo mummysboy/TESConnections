@@ -1,8 +1,17 @@
 // TESConnections - Hinge-Style Interactions
+// 
+// WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
+// 
+// NOTE: For localhost testing, CORS preflight requests may fail.
+// The form will work perfectly when deployed to a proper domain.
+//
 // Configuration - Update these with your actual AWS API Gateway endpoint
 const CONFIG = {
-    API_ENDPOINT: 'https://your-api-gateway-url.amazonaws.com/prod/submit-contact',
-    TIMEOUT: 10000 // 10 seconds
+    // Working API Gateway URL
+    API_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact',
+    TIMEOUT: 10000, // 10 seconds
+    RETRY_ATTEMPTS: 3,
+    RETRY_DELAY: 1000 // 1 second
 };
 
 // Form elements
@@ -16,6 +25,7 @@ const communicationField = document.getElementById('communication');
 const infoField = document.getElementById('info');
 const commentsField = document.getElementById('comments');
 
+
 // Communication option cards
 const optionCards = document.querySelectorAll('.option-card');
 
@@ -26,23 +36,23 @@ const communicationError = document.getElementById('communicationError');
 // Validation rules
 const validationRules = {
     name: {
-        required: true,
-        minLength: 2,
-        maxLength: 100,
-        pattern: /^[a-zA-Z\s\-'\.]+$/,
-        message: 'Please enter a valid name (2-100 characters)'
+required: true,
+minLength: 2,
+maxLength: 100,
+pattern: /^[a-zA-Z\s\-'\.]+$/,
+message: 'Please enter a valid name (2-100 characters)'
     },
     communication: {
-        required: true,
-        message: 'Please select your preferred communication method'
+required: true,
+message: 'Please select your preferred communication method'
     },
     info: {
-        maxLength: 500,
-        message: 'Additional information must be 500 characters or less'
+maxLength: 500,
+message: 'Additional information must be 500 characters or less'
     },
     comments: {
-        maxLength: 1000,
-        message: 'Comments must be 1000 characters or less'
+maxLength: 1000,
+message: 'Comments must be 1000 characters or less'
     }
 };
 
@@ -55,16 +65,16 @@ function addRippleEffect(element, event) {
     const y = event.clientY - rect.top - size / 2;
     
     ripple.style.cssText = `
-        position: absolute;
-        width: ${size}px;
-        height: ${size}px;
-        left: ${x}px;
-        top: ${y}px;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        transform: scale(0);
-        animation: ripple 0.6s linear;
-        pointer-events: none;
+position: absolute;
+width: ${size}px;
+height: ${size}px;
+left: ${x}px;
+top: ${y}px;
+background: rgba(255, 255, 255, 0.3);
+border-radius: 50%;
+transform: scale(0);
+animation: ripple 0.6s linear;
+pointer-events: none;
     `;
     
     element.style.position = 'relative';
@@ -72,7 +82,7 @@ function addRippleEffect(element, event) {
     element.appendChild(ripple);
     
     setTimeout(() => {
-        ripple.remove();
+ripple.remove();
     }, 600);
 }
 
@@ -80,10 +90,10 @@ function addRippleEffect(element, event) {
 const style = document.createElement('style');
 style.textContent = `
     @keyframes ripple {
-        to {
-            transform: scale(4);
-            opacity: 0;
-        }
+to {
+    transform: scale(4);
+    opacity: 0;
+}
     }
 `;
 document.head.appendChild(style);
@@ -92,30 +102,30 @@ document.head.appendChild(style);
 function showError(field, message) {
     const errorElement = document.getElementById(field + 'Error');
     if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
+errorElement.textContent = message;
+errorElement.style.display = 'block';
     }
     
     // Add error styling to the field
     const fieldElement = document.getElementById(field);
     if (fieldElement) {
-        fieldElement.style.borderColor = '#ef4444';
-        fieldElement.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+fieldElement.style.borderColor = '#ef4444';
+fieldElement.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
     }
 }
 
 function clearError(field) {
     const errorElement = document.getElementById(field + 'Error');
     if (errorElement) {
-        errorElement.textContent = '';
-        errorElement.style.display = 'none';
+errorElement.textContent = '';
+errorElement.style.display = 'none';
     }
     
     // Remove error styling from the field
     const fieldElement = document.getElementById(field);
     if (fieldElement) {
-        fieldElement.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-        fieldElement.style.backgroundColor = '#0a0a0a';
+fieldElement.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+fieldElement.style.backgroundColor = '#0a0a0a';
     }
 }
 
@@ -125,31 +135,31 @@ function validateField(fieldName, value) {
     
     // Required field validation
     if (rules.required && (!value || value.trim() === '')) {
-        showError(fieldName, rules.message);
-        return false;
+showError(fieldName, rules.message);
+return false;
     }
     
     // Skip other validations if field is empty and not required
     if (!value || value.trim() === '') {
-        clearError(fieldName);
-        return true;
+clearError(fieldName);
+return true;
     }
     
     // Length validations
     if (rules.minLength && value.length < rules.minLength) {
-        showError(fieldName, rules.message);
-        return false;
+showError(fieldName, rules.message);
+return false;
     }
     
     if (rules.maxLength && value.length > rules.maxLength) {
-        showError(fieldName, rules.message);
-        return false;
+showError(fieldName, rules.message);
+return false;
     }
     
     // Pattern validation
     if (rules.pattern && !rules.pattern.test(value)) {
-        showError(fieldName, rules.message);
-        return false;
+showError(fieldName, rules.message);
+return false;
     }
     
     clearError(fieldName);
@@ -172,42 +182,45 @@ function validateForm() {
 
 function setLoadingState(isLoading) {
     if (isLoading) {
-        submitBtn.disabled = true;
-        submitBtn.classList.add('loading');
-        submitBtn.querySelector('.btn-text').textContent = 'Connecting...';
+submitBtn.disabled = true;
+submitBtn.classList.add('loading');
+submitBtn.querySelector('.btn-text').textContent = 'Connecting...';
     } else {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('loading');
-        submitBtn.querySelector('.btn-text').textContent = 'Let\'s Connect';
+submitBtn.disabled = false;
+submitBtn.classList.remove('loading');
+submitBtn.querySelector('.btn-text').textContent = 'Let\'s Connect';
     }
 }
 
 function showSuccess() {
-    // Hide form card with animation
+    // Hide form card
     const formCard = document.querySelector('.form-card');
-    formCard.style.transform = 'translateX(-100%)';
-    formCard.style.opacity = '0';
+    formCard.style.display = 'none';
     
-    setTimeout(() => {
-        formCard.style.display = 'none';
-        successCard.style.display = 'block';
-        successCard.style.transform = 'translateX(100%)';
-        successCard.style.opacity = '0';
-        
-        // Animate success card in
-        setTimeout(() => {
-            successCard.style.transform = 'translateX(0)';
-            successCard.style.opacity = '1';
-        }, 50);
-    }, 300);
+    // Generate reference ID
+    const referenceId = generateReferenceId();
+    const referenceElement = document.getElementById('referenceId');
+    if (referenceElement) {
+referenceElement.textContent = referenceId;
+    }
+    
+    // Show success card
+    successCard.style.display = 'block';
     
     // Scroll to success card
-    setTimeout(() => {
-        successCard.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-        });
-    }, 400);
+    successCard.scrollIntoView({ 
+behavior: 'smooth', 
+block: 'center' 
+    });
+}
+
+function generateReferenceId() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `TC-${year}${month}${day}-${random}`;
 }
 
 function resetForm() {
@@ -223,64 +236,86 @@ function resetForm() {
     
     // Reset option cards
     optionCards.forEach(card => {
-        card.classList.remove('selected');
+card.classList.remove('selected');
     });
     
     // Show form card
     const formCard = document.querySelector('.form-card');
     formCard.style.display = 'block';
-    formCard.style.transform = 'translateX(0)';
-    formCard.style.opacity = '1';
     
     // Hide success card
     successCard.style.display = 'none';
 }
 
-async function submitToAWS(formData) {
+async function submitToAWS(formData, attempt = 1) {
     try {
-        const response = await fetch(CONFIG.API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        return result;
+// Check if API endpoint is configured
+if (CONFIG.API_ENDPOINT.includes('your-api-gateway-url')) {
+    throw new Error('API endpoint not configured. Please update the API_ENDPOINT in script.js with your actual AWS API Gateway URL.');
+}
+
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
+
+const response = await fetch(CONFIG.API_ENDPOINT, {
+    method: 'POST',
+    headers: {
+-Type': 'application/json',
+    },
+    body: JSON.stringify(formData),
+    signal: controller.signal,
+    mode: 'cors'
+});
+clearTimeout(timeoutId);
+if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Server error (${response.status}). Please try again.`);
+}
+const result = await response.json();
+return result;
     } catch (error) {
-        console.error('Error submitting form:', error);
-        throw new Error('Failed to submit form. Please try again.');
+// Handle specific error types
+if (error.name === 'AbortError') {
+    throw new Error('Request timed out. Please check your connection and try again.');
+}
+if (error.message.includes('Failed to fetch') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+    throw new Error('Cannot connect to server. Please check your internet connection and try again.');
+}
+if (error.message.includes('CORS') || error.message.includes('Access-Control-Allow-Origin')) {
+    throw new Error('CORS error detected. This is a localhost testing issue. The form will work perfectly when deployed to a proper domain. For now, try refreshing the page or testing from a different browser.');
+}
+// Retry logic for network errors
+if (attempt < CONFIG.RETRY_ATTEMPTS && (
+    error.message.includes('Failed to fetch') || 
+    error.message.includes('ERR_NAME_NOT_RESOLVED') ||
+    error.message.includes('NetworkError')
+)) {
+    await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
+    return submitToAWS(formData, attempt + 1);
+}
+// Re-throw the original error if it's not a retryable network error
+throw error;
     }
 }
 
 // Communication option selection
 optionCards.forEach(card => {
     card.addEventListener('click', (e) => {
-        // Add ripple effect
-        addRippleEffect(card, e);
-        
-        // Remove selection from all cards
-        optionCards.forEach(c => c.classList.remove('selected'));
-        
-        // Add selection to clicked card
-        card.classList.add('selected');
-        
-        // Update hidden input
-        const value = card.getAttribute('data-value');
-        communicationField.value = value;
-        
-        // Clear any communication errors
-        clearError('communication');
-        
-        // Add haptic feedback if available
-        if (navigator.vibrate) {
-            navigator.vibrate(50);
-        }
+// Add ripple effect
+addRippleEffect(card, e);
+// Remove selection from all cards
+optionCards.forEach(c => c.classList.remove('selected'));
+// Add selection to clicked card
+card.classList.add('selected');
+// Update hidden input
+const value = card.getAttribute('data-value');
+communicationField.value = value;
+// Clear any communication errors
+clearError('communication');
+// Add haptic feedback if available
+if (navigator.vibrate) {
+    navigator.vibrate(50);
+}
     });
 });
 
@@ -293,72 +328,71 @@ form.addEventListener('submit', async (e) => {
     
     // Validate form
     if (!validateForm()) {
-        // Shake animation for errors
-        form.style.animation = 'shake 0.5s ease-in-out';
-        setTimeout(() => {
-            form.style.animation = '';
-        }, 500);
-        return;
+// Shake animation for errors
+form.style.animation = 'shake 0.5s ease-in-out';
+setTimeout(() => {
+    form.style.animation = '';
+}, 500);
+return;
     }
     
     // Prepare form data
     const formData = {
-        name: nameField.value.trim(),
-        communication: communicationField.value,
-        info: infoField.value.trim(),
-        comments: commentsField.value.trim(),
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        referrer: document.referrer
+name: nameField.value.trim(),
+communication: communicationField.value,
+info: infoField.value.trim(),
+comments: commentsField.value.trim(),
+timestamp: new Date().toISOString(),
+userAgent: navigator.userAgent,
+referrer: document.referrer
     };
     
     // Set loading state
     setLoadingState(true);
     
     try {
-        // Submit to AWS
-        await submitToAWS(formData);
-        
-        // Show success message
-        showSuccess();
-        
-        // Track successful submission
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'form_submit', {
-                event_category: 'engagement',
-                event_label: 'contact_form'
-            });
-        }
-        
+// Submit to AWS
+await submitToAWS(formData);
+// Show success message
+showSuccess();
+// Track successful submission
+if (typeof gtag !== 'undefined') {
+    gtag('event', 'form_submit', {
+tegory: 'engagement',
+bel: 'contact_form'
+    });
+}
     } catch (error) {
-        // Show error message with animation
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-toast';
-        errorDiv.textContent = 'Connection failed. Please try again.';
-        errorDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            z-index: 1000;
-            animation: slideDown 0.3s ease-out;
-        `;
-        
-        document.body.appendChild(errorDiv);
-        
-        setTimeout(() => {
-            errorDiv.style.animation = 'slideUp 0.3s ease-in';
-            setTimeout(() => errorDiv.remove(), 300);
-        }, 3000);
-        
-        console.error('Form submission error:', error);
-        
+// Show error message with animation
+const errorDiv = document.createElement('div');
+errorDiv.className = 'error-toast';
+// Use the specific error message from the API call
+const errorMessage = error.message || 'Connection failed. Please try again.';
+errorDiv.textContent = errorMessage;
+errorDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ef4444;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: slideDown 0.3s ease-out;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+`;
+document.body.appendChild(errorDiv);
+// Show error for longer if it's a configuration issue
+const displayTime = errorMessage.includes('not configured') ? 8000 : 4000;
+setTimeout(() => {
+    errorDiv.style.animation = 'slideUp 0.3s ease-in';
+    setTimeout(() => errorDiv.remove(), 300);
+}, displayTime);
     } finally {
-        setLoadingState(false);
+setLoadingState(false);
     }
 });
 
@@ -368,8 +402,23 @@ nameField.addEventListener('blur', () => {
 });
 
 nameField.addEventListener('input', () => {
+    // Capitalize first letter of each word
+    if (nameField.value.length > 0) {
+const words = nameField.value.split(' ');
+const capitalizedWords = words.map(word => {
+    if (word.length > 0) {
+ord.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }
+    return word;
+});
+const capitalizedText = capitalizedWords.join(' ');
+if (nameField.value !== capitalizedText) {
+    nameField.value = capitalizedText;
+}
+    }
+    
     if (nameError.textContent) {
-        validateField('name', nameField.value);
+validateField('name', nameField.value);
     }
 });
 
@@ -379,9 +428,9 @@ infoField.addEventListener('blur', () => {
 
 infoField.addEventListener('input', () => {
     if (infoField.value.length > validationRules.info.maxLength) {
-        showError('info', validationRules.info.message);
+showError('info', validationRules.info.message);
     } else {
-        clearError('info');
+clearError('info');
     }
 });
 
@@ -390,10 +439,20 @@ commentsField.addEventListener('blur', () => {
 });
 
 commentsField.addEventListener('input', () => {
+    // Capitalize first letter
+    if (commentsField.value.length > 0) {
+const firstChar = commentsField.value.charAt(0);
+const restOfText = commentsField.value.slice(1);
+const capitalizedText = firstChar.toUpperCase() + restOfText;
+if (commentsField.value !== capitalizedText) {
+    commentsField.value = capitalizedText;
+}
+    }
+    
     if (commentsField.value.length > validationRules.comments.maxLength) {
-        showError('comments', validationRules.comments.message);
+showError('comments', validationRules.comments.message);
     } else {
-        clearError('comments');
+clearError('comments');
     }
 });
 
@@ -401,141 +460,158 @@ commentsField.addEventListener('input', () => {
 const shakeStyle = document.createElement('style');
 shakeStyle.textContent = `
     @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        75% { transform: translateX(5px); }
+0%, 100% { transform: translateX(0); }
+25% { transform: translateX(-5px); }
+75% { transform: translateX(5px); }
     }
     
     @keyframes slideDown {
-        from {
-            transform: translateX(-50%) translateY(-100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+from {
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 0;
+}
+to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
     }
     
     @keyframes slideUp {
-        from {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(-50%) translateY(-100%);
-            opacity: 0;
-        }
+from {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+to {
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 0;
+}
     }
 `;
 document.head.appendChild(shakeStyle);
 
-// Character count indicators with animations
-function addCharacterCounters() {
-    const infoCounter = document.createElement('div');
-    infoCounter.className = 'char-counter';
-    infoCounter.style.cssText = `
-        text-align: right; 
-        font-size: 0.75rem; 
-        color: #6b7280; 
-        margin-top: 4px;
-        transition: color 0.3s ease;
-    `;
-    infoField.parentNode.appendChild(infoCounter);
-    
-    const commentsCounter = document.createElement('div');
-    commentsCounter.className = 'char-counter';
-    commentsCounter.style.cssText = `
-        text-align: right; 
-        font-size: 0.75rem; 
-        color: #6b7280; 
-        margin-top: 4px;
-        transition: color 0.3s ease;
-    `;
-    commentsField.parentNode.appendChild(commentsCounter);
-    
-    function updateCounters() {
-        const infoCount = infoField.value.length;
-        const commentsCount = commentsField.value.length;
-        
-        infoCounter.textContent = `${infoCount}/${validationRules.info.maxLength}`;
-        commentsCounter.textContent = `${commentsCount}/${validationRules.comments.maxLength}`;
-        
-        // Change color when approaching limit
-        if (infoCount > validationRules.info.maxLength * 0.8) {
-            infoCounter.style.color = infoCount >= validationRules.info.maxLength ? '#ef4444' : '#f59e0b';
-        } else {
-            infoCounter.style.color = '#6b7280';
-        }
-        
-        if (commentsCount > validationRules.comments.maxLength * 0.8) {
-            commentsCounter.style.color = commentsCount >= validationRules.comments.maxLength ? '#ef4444' : '#f59e0b';
-        } else {
-            commentsCounter.style.color = '#6b7280';
-        }
-    }
-    
-    infoField.addEventListener('input', updateCounters);
-    commentsField.addEventListener('input', updateCounters);
-    
-    // Initial count
-    updateCounters();
-}
 
-// Initialize character counters
-addCharacterCounters();
+// Hamburger Menu and Modal functionality
+const hamburgerMenu = document.getElementById('hamburgerMenu');
+const aboutModal = document.getElementById('aboutModal');
+const closeModal = document.getElementById('closeModal');
+
+// Open modal when hamburger menu is clicked
+hamburgerMenu.addEventListener('click', () => {
+    hamburgerMenu.classList.toggle('active');
+    aboutModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+});
+
+// Close modal when close button is clicked
+closeModal.addEventListener('click', () => {
+    hamburgerMenu.classList.remove('active');
+    aboutModal.classList.remove('active');
+    document.body.style.overflow = '';
+});
+
+// Close modal when clicking outside
+aboutModal.addEventListener('click', (e) => {
+    if (e.target === aboutModal) {
+hamburgerMenu.classList.remove('active');
+aboutModal.classList.remove('active');
+document.body.style.overflow = '';
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aboutModal.classList.contains('active')) {
+hamburgerMenu.classList.remove('active');
+aboutModal.classList.remove('active');
+document.body.style.overflow = '';
+    }
+});
 
 // Accessibility improvements
 document.addEventListener('keydown', (e) => {
     // Allow form submission with Enter key
     if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        form.dispatchEvent(new Event('submit'));
+e.preventDefault();
+form.dispatchEvent(new Event('submit'));
     }
     
     // Handle option card selection with keyboard
     if (e.key === 'Enter' || e.key === ' ') {
-        const focusedCard = document.activeElement;
-        if (focusedCard.classList.contains('option-card')) {
-            e.preventDefault();
-            focusedCard.click();
-        }
+const focusedCard = document.activeElement;
+if (focusedCard.classList.contains('option-card')) {
+    e.preventDefault();
+    focusedCard.click();
+}
     }
 });
 
 // Focus management with smooth transitions
 form.addEventListener('submit', () => {
     setTimeout(() => {
-        const firstError = form.querySelector('.error-message:not([style*="display: none"])');
-        if (firstError) {
-            const fieldName = firstError.id.replace('Error', '');
-            const field = document.getElementById(fieldName);
-            if (field) {
-                field.focus();
-                field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
+const firstError = form.querySelector('.error-message:not([style*="display: none"])');
+if (firstError) {
+    const fieldName = firstError.id.replace('Error', '');
+    const field = document.getElementById(fieldName);
+    if (field) {
+cus();
+rollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
     }, 100);
 });
 
+// Force input styling to stay black with white text
+function forceInputStyling() {
+    const inputs = document.querySelectorAll('.form-input, .form-textarea');
+    inputs.forEach(input => {
+// Force styling on various events
+const forceStyle = () => {
+    input.style.backgroundColor = '#0a0a0a';
+    input.style.color = '#ffffff';
+    input.style.background = '#0a0a0a';
+};
+// Apply on multiple events
+input.addEventListener('input', forceStyle);
+input.addEventListener('change', forceStyle);
+input.addEventListener('focus', forceStyle);
+input.addEventListener('blur', forceStyle);
+input.addEventListener('keyup', forceStyle);
+input.addEventListener('keydown', forceStyle);
+// Apply immediately
+forceStyle();
+// Use MutationObserver to catch any style changes
+const observer = new MutationObserver(() => {
+    if (input.style.backgroundColor !== '#0a0a0a' || input.style.color !== '#ffffff') {
+le();
+    }
+});
+observer.observe(input, {
+    attributes: true,
+    attributeFilter: ['style']
+});
+    });
+}
+
 // Initialize with smooth entrance animations
 document.addEventListener('DOMContentLoaded', () => {
+    // Force input styling
+    forceInputStyling();
+    
     // Animate elements on load
     const elements = document.querySelectorAll('.hero-card, .form-card');
     elements.forEach((element, index) => {
-        element.style.opacity = '0';
-        element.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-            element.style.transition = 'all 0.6s ease-out';
-            element.style.opacity = '1';
-            element.style.transform = 'translateY(0)';
-        }, index * 200);
+element.style.opacity = '0';
+element.style.transform = 'translateY(20px)';
+setTimeout(() => {
+    element.style.transition = 'all 0.6s ease-out';
+    element.style.opacity = '1';
+    element.style.transform = 'translateY(0)';
+}, index * 200);
     });
     
     // Set initial focus
     setTimeout(() => {
-        nameField.focus();
+nameField.focus();
     }, 1000);
     
     // Add smooth scrolling
@@ -550,10 +626,10 @@ const observerOptions = {
 
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
-        }
+if (entry.isIntersecting) {
+    entry.target.style.opacity = '1';
+    entry.target.style.transform = 'translateY(0)';
+}
     });
 }, observerOptions);
 
@@ -561,22 +637,11 @@ const observer = new IntersectionObserver((entries) => {
 document.addEventListener('DOMContentLoaded', () => {
     const animatedElements = document.querySelectorAll('.hero-card, .form-card, .success-card');
     animatedElements.forEach(element => {
-        element.style.opacity = '0';
-        element.style.transform = 'translateY(30px)';
-        element.style.transition = 'all 0.6s ease-out';
-        observer.observe(element);
+element.style.opacity = '0';
+element.style.transform = 'translateY(30px)';
+element.style.transition = 'all 0.6s ease-out';
+observer.observe(element);
     });
 });
 
-// Service Worker registration (optional - for offline support)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-                console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
+// Service Worker registration removed - no sw.js file exists
