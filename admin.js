@@ -13,6 +13,7 @@ const CONFIG = {
     API_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact',
     ADMIN_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/admin-data',
     DELETE_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/delete-submission',
+    PIN_AUTH_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/pin-auth',
     TIMEOUT: 10000,
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000
@@ -125,7 +126,51 @@ function updateUserInfo(tokenPayload) {
     }
 }
 
-// Handle Cognito login
+// Handle PIN login
+async function handlePinLogin() {
+    const pin = prompt('Enter 4-digit admin PIN:');
+    if (!pin) return; // User cancelled
+    
+    try {
+        showLoading(true);
+        
+        // Call the PIN authentication endpoint
+        const response = await fetch(CONFIG.PIN_AUTH_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pin: pin })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Store the session token
+            authToken = data.sessionToken;
+            isAuthenticated = true;
+            
+            // Create user object
+            const user = {
+                email: 'admin@tesconnections.com',
+                name: 'Admin User'
+            };
+            
+            showAdminDashboard();
+            updateUserInfo(user);
+            showSuccess('PIN authentication successful');
+        } else {
+            showError(data.message || 'Invalid PIN. Please try again.');
+        }
+    } catch (error) {
+        console.error('PIN authentication error:', error);
+        showError('Authentication failed. Please try again.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Handle Cognito login (fallback)
 function handleCognitoLogin() {
     const loginUrl = `https://tes-connections-admin-prod-851725394837.auth.${COGNITO_CONFIG.region}.amazoncognito.com/login?client_id=${COGNITO_CONFIG.userPoolClientId}&response_type=token&scope=email+openid+profile&redirect_uri=${encodeURIComponent(window.location.href)}`;
     
@@ -178,8 +223,13 @@ function handleAuthCallback() {
 // Setup event listeners
 function setupEventListeners() {
     // Authentication events
+    const pinLoginBtn = document.getElementById('pinLoginBtn');
     const cognitoLoginBtn = document.getElementById('cognitoLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (pinLoginBtn) {
+        pinLoginBtn.addEventListener('click', handlePinLogin);
+    }
     
     if (cognitoLoginBtn) {
         cognitoLoginBtn.addEventListener('click', handleCognitoLogin);

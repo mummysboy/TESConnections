@@ -3,7 +3,7 @@ import boto3
 import uuid
 import re
 import html
-from datetime import datetime
+from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
 import os
 import hashlib
@@ -11,6 +11,7 @@ import time
 import jwt
 import requests
 from urllib.parse import urlparse
+import secrets
 
 # Initialize DynamoDB
 dynamodb = boto3.resource('dynamodb')
@@ -31,6 +32,11 @@ ALLOWED_ORIGINS = [
 # Cognito configuration
 COGNITO_USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID', '')
 COGNITO_REGION = os.environ.get('AWS_REGION', 'us-west-1')
+
+# PIN Authentication configuration
+ADMIN_PIN = os.environ.get('ADMIN_PIN', '1234')  # Set this in Lambda environment variables
+PIN_SESSION_SECRET = os.environ.get('PIN_SESSION_SECRET', 'your-secret-key-change-this')
+PIN_SESSION_DURATION = 24 * 60 * 60  # 24 hours in seconds
 
 def get_cognito_public_keys():
     """
@@ -96,6 +102,61 @@ def verify_jwt_token(token):
         print(f"JWT verification error: {e}")
         return False, "Token verification failed"
 
+def verify_pin_token(token):
+    """
+    Verify PIN-based session token
+    """
+    try:
+        # Remove 'Bearer ' prefix if present
+        if token.startswith('Bearer '):
+            token = token[7:]
+        
+        # Decode the token
+        decoded_token = jwt.decode(
+            token,
+            PIN_SESSION_SECRET,
+            algorithms=['HS256'],
+            options={"verify_exp": True}
+        )
+        
+        # Check if token is still valid
+        if decoded_token.get('type') != 'pin_session':
+            return False, "Invalid token type"
+        
+        return True, decoded_token
+        
+    except jwt.ExpiredSignatureError:
+        return False, "PIN session has expired"
+    except jwt.InvalidTokenError as e:
+        return False, f"Invalid PIN token: {str(e)}"
+    except Exception as e:
+        print(f"PIN token verification error: {e}")
+        return False, "PIN token verification failed"
+
+def generate_pin_session_token():
+    """
+    Generate a PIN-based session token
+    """
+    payload = {
+        'type': 'pin_session',
+        'user': 'admin',
+        'iat': datetime.utcnow(),
+        'exp': datetime.utcnow() + timedelta(seconds=PIN_SESSION_DURATION),
+        'jti': str(uuid.uuid4())  # Unique token ID
+    }
+    
+    token = jwt.encode(payload, PIN_SESSION_SECRET, algorithm='HS256')
+    return token
+
+def authenticate_pin(pin):
+    """
+    Authenticate PIN and return session token
+    """
+    if pin == ADMIN_PIN:
+        return True, generate_pin_session_token()
+    else:
+        return False, "Invalid PIN"
+
 def is_admin_endpoint(path):
     """
     Check if the request is for an admin endpoint
@@ -117,15 +178,17 @@ def validate_admin_access(event):
     if not auth_header:
         return False, "Authorization header missing"
     
-    # Verify JWT token
+    # Try PIN authentication first
+    is_valid, result = verify_pin_token(auth_header)
+    if is_valid:
+        return True, result
+    
+    # Fallback to Cognito JWT verification
     is_valid, result = verify_jwt_token(auth_header)
+    if is_valid:
+        return True, result
     
-    if not is_valid:
-        return False, result
-    
-    # Check if user has admin privileges (you can add custom claims here)
-    # For now, any authenticated user is considered admin
-    return True, result
+    return False, "Invalid authentication token"
 
 def sanitize_input(text, max_length=1000):
     """
@@ -321,6 +384,58 @@ def lambda_handler(event, context):
                 'message': admin_error
             })
         }
+    
+    # Handle PIN authentication requests
+    if event['httpMethod'] == 'POST' and '/pin-auth' in event.get('path', ''):
+        try:
+            if isinstance(event['body'], str):
+                body = json.loads(event['body'])
+            else:
+                body = event['body']
+            
+            pin = body.get('pin')
+            if not pin:
+                return {
+                    'statusCode': 400,
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'success': False,
+                        'message': 'PIN is required'
+                    })
+                }
+            
+            # Authenticate PIN
+            is_valid, result = authenticate_pin(pin)
+            
+            if is_valid:
+                return {
+                    'statusCode': 200,
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'success': True,
+                        'sessionToken': result,
+                        'message': 'PIN authentication successful'
+                    })
+                }
+            else:
+                return {
+                    'statusCode': 401,
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'success': False,
+                        'message': result
+                    })
+                }
+                
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'success': False,
+                    'message': 'Authentication failed'
+                })
+            }
     
     # Handle admin data requests
     if event['httpMethod'] == 'GET' and '/admin-data' in event.get('path', ''):
