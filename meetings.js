@@ -42,10 +42,10 @@ const nextDayBtn = document.getElementById('nextDay');
 // Calendar data
 const calendarData = {
     availableDates: [
-        new Date(2024, 8, 12), // September 12, 2024 (month is 0-indexed)
-        new Date(2024, 8, 13), // September 13, 2024
-        new Date(2024, 8, 14), // September 14, 2024
-        new Date(2024, 8, 15)  // September 15, 2024
+        new Date(2025, 8, 12), // September 12, 2025 (month is 0-indexed)
+        new Date(2025, 8, 13), // September 13, 2025
+        new Date(2025, 8, 14), // September 14, 2025
+        new Date(2025, 8, 15)  // September 15, 2025
     ],
     currentDateIndex: 0,
     selectedTimeSlot: null,
