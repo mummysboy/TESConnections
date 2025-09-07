@@ -260,7 +260,7 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
 const response = await fetch(CONFIG.API_ENDPOINT, {
     method: 'POST',
     headers: {
--Type': 'application/json',
+        'Content-Type': 'application/json',
     },
     body: JSON.stringify(formData),
     signal: controller.signal,
@@ -358,8 +358,8 @@ showSuccess();
 // Track successful submission
 if (typeof gtag !== 'undefined') {
     gtag('event', 'form_submit', {
-tegory: 'engagement',
-bel: 'contact_form'
+category: 'engagement',
+label: 'contact_form'
     });
 }
     } catch (error) {
@@ -407,7 +407,7 @@ nameField.addEventListener('input', () => {
 const words = nameField.value.split(' ');
 const capitalizedWords = words.map(word => {
     if (word.length > 0) {
-ord.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }
     return word;
 });
@@ -553,8 +553,8 @@ if (firstError) {
     const fieldName = firstError.id.replace('Error', '');
     const field = document.getElementById(fieldName);
     if (field) {
-cus();
-rollIntoView({ behavior: 'smooth', block: 'center' });
+field.focus();
+field.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
     }, 100);
@@ -582,7 +582,7 @@ forceStyle();
 // Use MutationObserver to catch any style changes
 const observer = new MutationObserver(() => {
     if (input.style.backgroundColor !== '#0a0a0a' || input.style.color !== '#ffffff') {
-le();
+forceStyle();
     }
 });
 observer.observe(input, {
