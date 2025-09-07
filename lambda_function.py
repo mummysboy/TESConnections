@@ -50,7 +50,6 @@ def get_cognito_public_keys():
         response.raise_for_status()
         return response.json()
     except Exception as e:
-        print(f"Error fetching Cognito public keys: {e}")
         return None
 
 def verify_jwt_token(token):
@@ -101,7 +100,6 @@ def verify_jwt_token(token):
     except jwt.InvalidTokenError as e:
         return False, f"Invalid token: {str(e)}"
     except Exception as e:
-        print(f"JWT verification error: {e}")
         return False, "Token verification failed"
 
 def verify_pin_token(token):
@@ -132,7 +130,6 @@ def verify_pin_token(token):
     except jwt.InvalidTokenError as e:
         return False, f"Invalid PIN token: {str(e)}"
     except Exception as e:
-        print(f"PIN token verification error: {e}")
         return False, "PIN token verification failed"
 
 def generate_pin_session_token():
@@ -278,7 +275,6 @@ def check_rate_limit(ip_address):
         
         return True, ""
     except Exception as e:
-        print(f"Rate limit check failed: {e}")
         # Allow request if rate limiting fails
         return True, ""
 
@@ -341,9 +337,6 @@ def get_admin_data():
         return submissions
         
     except Exception as e:
-        print(f"Error retrieving admin data: {e}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
         return []
 
 def delete_submission(submission_id):
@@ -354,7 +347,6 @@ def delete_submission(submission_id):
         table.delete_item(Key={'id': submission_id})
         return True
     except Exception as e:
-        print(f"Error deleting submission: {e}")
         return False
 
 def lambda_handler(event, context):
@@ -632,8 +624,6 @@ def lambda_handler(event, context):
         # Store in DynamoDB
         table.put_item(Item=item)
         
-        # Log successful submission (without sensitive data)
-        print(f"Form submission stored successfully: {submission_id} from IP: {client_ip}")
         
         return {
             'statusCode': 200,
@@ -656,7 +646,6 @@ def lambda_handler(event, context):
         }
     
     except ClientError as e:
-        print(f"DynamoDB error: {e}")
         return {
             'statusCode': 500,
             'headers': cors_headers,
@@ -667,7 +656,6 @@ def lambda_handler(event, context):
         }
     
     except Exception as e:
-        print(f"Unexpected error: {e}")
         return {
             'statusCode': 500,
             'headers': cors_headers,
@@ -706,5 +694,4 @@ async def send_notification(item):
             )
             
     except Exception as e:
-        print(f"Notification error: {e}")
         # Don't fail the main function if notification fails

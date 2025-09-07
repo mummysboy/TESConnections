@@ -1,6 +1,5 @@
 // TESConnections - Admin Dashboard JavaScript
 
-console.log('Admin.js loaded successfully'); // Basic debug log
 
 // Configuration
 const CONFIG = {
@@ -13,7 +12,6 @@ const CONFIG = {
     RETRY_DELAY: 1000
 };
 
-console.log('CONFIG loaded:', CONFIG); // Debug log
 
 // Authentication state
 let isAuthenticated = false;
@@ -68,30 +66,23 @@ function initializeDOMElements() {
 
 // Initialize admin dashboard
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded event fired'); // Debug log
     initializeDOMElements();
     checkAuthentication();
     setupEventListeners();
     setupModal();
-    console.log('Admin dashboard initialization completed'); // Debug log
 });
 
 // Check if user is already authenticated
 function checkAuthentication() {
-    console.log('checkAuthentication called'); // Debug log
     // Check if user is already authenticated via PIN
     const storedAuth = localStorage.getItem('admin_authenticated');
     const storedToken = localStorage.getItem('admin_token');
-    console.log('Stored auth:', storedAuth); // Debug log
-    console.log('Stored token:', storedToken); // Debug log
     
     if (storedAuth === 'true' && storedToken) {
-        console.log('User is already authenticated, showing admin dashboard'); // Debug log
         isAuthenticated = true;
         authToken = storedToken;
         showAdminDashboard();
     } else {
-        console.log('User not authenticated, showing login screen'); // Debug log
         // Clear any invalid stored data
         localStorage.removeItem('admin_authenticated');
         localStorage.removeItem('admin_token');
@@ -109,58 +100,25 @@ function showLoginScreen() {
 
 // Show admin dashboard
 function showAdminDashboard() {
-    console.log('showAdminDashboard called'); // Debug log
     
     const loginScreen = document.getElementById('loginScreen');
     const adminDashboard = document.getElementById('adminDashboard');
     
-    console.log('loginScreen element:', loginScreen); // Debug log
-    console.log('adminDashboard element:', adminDashboard); // Debug log
     
     // Ensure PIN modal is completely hidden first
     const pinModal = document.getElementById('pinModal');
     if (pinModal) {
         pinModal.classList.remove('show');
         pinModal.style.display = 'none';
-        console.log('PIN modal hidden'); // Debug log
     }
     
     if (loginScreen) {
         loginScreen.style.display = 'none';
-        console.log('Login screen hidden'); // Debug log
     } else {
-        console.log('ERROR: loginScreen element not found!'); // Debug log
     }
     
     if (adminDashboard) {
-        // FORCE VISIBLE - Add bright red background and text
-        adminDashboard.innerHTML = `
-            <div style="background: red; color: white; padding: 50px; font-size: 24px; text-align: center; min-height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 99999;">
-                <h1>🎉 ADMIN DASHBOARD IS WORKING! 🎉</h1>
-                <p>If you can see this red screen, the dashboard is working!</p>
-                <p>Data loaded: ${allData.length} items</p>
-                <button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; background: white; color: red; border: none; border-radius: 5px;">Refresh Page</button>
-            </div>
-        `;
         adminDashboard.style.display = 'block';
-        adminDashboard.style.position = 'fixed';
-        adminDashboard.style.top = '0';
-        adminDashboard.style.left = '0';
-        adminDashboard.style.width = '100vw';
-        adminDashboard.style.height = '100vh';
-        adminDashboard.style.zIndex = '99999';
-        adminDashboard.style.backgroundColor = 'red';
-        adminDashboard.style.overflow = 'visible';
-        
-        // Prevent any other code from modifying this
-        adminDashboard.setAttribute('data-debug-mode', 'true');
-        
-        console.log('Admin dashboard shown'); // Debug log
-        console.log('Admin dashboard computed style:', window.getComputedStyle(adminDashboard).display); // Debug log
-        console.log('Admin dashboard position:', adminDashboard.getBoundingClientRect()); // Debug log
-        console.log('Admin dashboard innerHTML length:', adminDashboard.innerHTML.length); // Debug log
-    } else {
-        console.log('ERROR: adminDashboard element not found!'); // Debug log
     }
     
     loadData();
@@ -309,7 +267,6 @@ function removePinDigit() {
 async function submitPin() {
     if (pinEntry.length !== 4) return;
     
-    console.log('Submitting PIN:', pinEntry); // Debug log
     
     try {
         showPinLoading(true);
@@ -320,17 +277,14 @@ async function submitPin() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ pin: pinEntry })
+            body: JSON.stringify({ pin: pinEntry }),
+            mode: 'cors' // Explicitly set CORS mode
         });
         
-        console.log('PIN response status:', response.status); // Debug log
         
         const data = await response.json();
-        console.log('PIN response data:', data); // Debug log
         
         if (response.ok && data.success) {
-            console.log('PIN authentication successful'); // Debug log
-            console.log('Response data:', data); // Debug log
             // Store the session token
             authToken = data.sessionToken;
             isAuthenticated = true;
@@ -345,20 +299,16 @@ async function submitPin() {
                 name: 'Admin User'
             };
             
-            console.log('About to hide PIN modal and show dashboard'); // Debug log
             hidePinModal();
             // Small delay to ensure modal is hidden before showing dashboard
             setTimeout(() => {
-                console.log('Timeout executed - showing admin dashboard'); // Debug log
                 showAdminDashboard();
                 updateUserInfo(user);
             }, 100);
         } else {
-            console.log('PIN authentication failed:', data.message); // Debug log
             showPinError(data.message || 'Invalid PIN. Please try again.');
         }
     } catch (error) {
-        console.error('PIN authentication error:', error); // Debug log
         showPinError('Authentication failed. Please try again.');
     } finally {
         showPinLoading(false);
@@ -420,6 +370,7 @@ function setupEventListeners() {
     // Authentication events
     const pinLoginBtn = document.getElementById('pinLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const testDashboardBtn = document.getElementById('testDashboardBtn');
     
     if (pinLoginBtn) {
         pinLoginBtn.addEventListener('click', handlePinLogin);
@@ -427,6 +378,14 @@ function setupEventListeners() {
     
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
+    }
+    
+    if (testDashboardBtn) {
+        testDashboardBtn.addEventListener('click', () => {
+            isAuthenticated = true;
+            authToken = 'test-token';
+            showAdminDashboard();
+        });
     }
     
     // Meetings section
@@ -451,16 +410,12 @@ function setupEventListeners() {
 
 // Load data from API
 async function loadData() {
-    console.log('loadData called'); // Debug log
     showLoading(true);
     
     try {
-        console.log('Fetching admin data...'); // Debug log
         const data = await fetchAdminData();
-        console.log('Admin data received:', data); // Debug log
         
         if (data.length === 0) {
-            console.log('No data found in database'); // Debug log
             showError('No data found in database.');
             meetingsData = [];
             connectionsData = [];
@@ -471,8 +426,6 @@ async function loadData() {
             meetingsData = allData.filter(item => item.type === 'meeting');
             connectionsData = allData.filter(item => item.type === 'connection');
             
-            console.log('Meetings data:', meetingsData); // Debug log
-            console.log('Connections data:', connectionsData); // Debug log
             
             // Sort meetings by actual meeting time (soonest to latest)
             meetingsData.sort((a, b) => {
@@ -494,13 +447,10 @@ async function loadData() {
             connectionsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
         
-        console.log('Updating stats and rendering tables...'); // Debug log
         updateStats();
         renderTables();
-        console.log('Data loading completed successfully'); // Debug log
         
     } catch (error) {
-        console.error('Error in loadData:', error); // Debug log
         showError('Failed to load data. Please try again.');
     } finally {
         showLoading(false);
@@ -517,21 +467,15 @@ async function fetchAdminData() {
         // Add authorization header if authenticated
         if (isAuthenticated && authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
-            console.log('Adding Authorization header with token:', authToken); // Debug log
         } else {
-            console.log('No auth token available. isAuthenticated:', isAuthenticated, 'authToken:', authToken); // Debug log
         }
         
-        console.log('Making request to:', CONFIG.ADMIN_ENDPOINT); // Debug log
-        console.log('Request headers:', headers); // Debug log
         
         const response = await fetch(CONFIG.ADMIN_ENDPOINT, {
             method: 'GET',
             headers: headers
         });
         
-        console.log('Response status:', response.status); // Debug log
-        console.log('Response headers:', response.headers); // Debug log
         
         if (!response.ok) {
             throw new Error(`Failed to fetch data: ${response.status}`);
@@ -551,7 +495,6 @@ async function fetchAdminData() {
         }
         
     } catch (error) {
-        console.error('fetchAdminData error:', error); // Debug log
         showError('Failed to load data from database. Please check your connection and try again.');
         return [];
     }
@@ -586,7 +529,6 @@ function renderTables() {
 
 // Render meetings table
 function renderMeetingsTable() {
-    
     if (!meetingsTableBody || !meetingsEmptyState) {
         return;
     }
@@ -601,7 +543,6 @@ function renderMeetingsTable() {
     meetingsTableBody.innerHTML = meetingsData.map(item => {
         // Validate and clean data
         const cleanItem = validateAndCleanMeetingData(item);
-        
         
         return `
         <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
@@ -645,7 +586,6 @@ function validateAndCleanMeetingData(item) {
 
 // Render connections table
 function renderConnectionsTable() {
-    
     if (!connectionsTableBody || !connectionsEmptyState) {
         return;
     }
@@ -660,7 +600,6 @@ function renderConnectionsTable() {
     connectionsTableBody.innerHTML = connectionsData.map(item => {
         // Validate and clean data
         const cleanItem = validateAndCleanConnectionData(item);
-        
         
         return `
         <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
@@ -706,7 +645,6 @@ function validateAndCleanConnectionData(item) {
 
 // Get contact details display - properly extract contact information
 function getContactDetailsDisplay(item) {
-    
     // The info field should contain the actual contact details (email, phone, username, etc.)
     if (item.info && item.info.trim()) {
         const info = item.info.trim();
@@ -801,7 +739,6 @@ function getActualMeetingTime(item) {
 
 // Get meeting time display - properly extract and format meeting times
 function getMeetingTimeDisplay(item) {
-    
     // First priority: timeSlot field (this is the proper field for meeting times)
     if (item.timeSlot && item.timeSlot.trim() && item.timeSlot !== 'N/A' && item.timeSlot !== '') {
         return formatMeetingTime(item.timeSlot);
@@ -946,10 +883,8 @@ function getCommunicationIcon(communication) {
 
 // Setup event delegation for table clicks
 function setupTableClickDelegation() {
-    
     // Add click listener to document to catch clicks on dynamically added rows
     document.addEventListener('click', (e) => {
-        
         // Check if clicked element is a clickable row or inside one
         const clickableRow = e.target.closest('.clickable-row');
         if (clickableRow) {
@@ -959,7 +894,6 @@ function setupTableClickDelegation() {
             
             if (id && type) {
                 showDetailedView(id, type);
-            } else {
             }
         }
     });

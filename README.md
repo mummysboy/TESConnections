@@ -147,40 +147,12 @@ The Lambda function uses these environment variables:
 - Lambda metrics for invocations, errors, duration
 - DynamoDB metrics for read/write capacity
 
-## Troubleshooting
-
-### Common Issues
-
-1. **CORS Errors**
-   - Ensure API Gateway has OPTIONS method configured
-   - Check Lambda function returns proper CORS headers
-
-2. **Form Not Submitting**
-   - Verify API endpoint URL in `script.js`
-   - Check browser console for errors
-   - Ensure Lambda function has proper permissions
-
-3. **Data Not Stored**
-   - Check DynamoDB table exists
-   - Verify Lambda execution role has DynamoDB permissions
-   - Check CloudWatch logs for errors
-
-### Debug Mode
-
-Enable debug logging in Lambda function:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+4. Submit a pull request
 
 ## License
 
@@ -190,5 +162,4 @@ MIT License - see LICENSE file for details
 
 For issues and questions:
 - Create an issue on GitHub
-- Check the troubleshooting section above
 - Review AWS CloudWatch logs for backend issues
