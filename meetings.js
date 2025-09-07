@@ -49,17 +49,7 @@ const calendarData = {
     ],
     currentDateIndex: 0,
     selectedTimeSlot: null,
-    bookedSlots: new Set([
-        '2024-09-12-09:00',
-        '2024-09-12-10:30',
-        '2024-09-12-14:00',
-        '2024-09-13-11:00',
-        '2024-09-13-15:30',
-        '2024-09-14-09:30',
-        '2024-09-14-16:00',
-        '2024-09-15-10:00',
-        '2024-09-15-13:30'
-    ])
+    bookedSlots: new Set()
 };
 
 // Validation rules
@@ -593,6 +583,9 @@ form.addEventListener('submit', async (e) => {
         // Show success message
         showSuccess();
         
+        // Refresh calendar with updated booked slots
+        await refreshCalendar();
+        
         // Track successful submission
         if (typeof gtag !== 'undefined') {
             gtag('event', 'form_submit', {
@@ -844,8 +837,48 @@ function forceInputStyling() {
     });
 }
 
+// Load booked slots from API
+async function loadBookedSlots() {
+    try {
+        const response = await fetch('https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/admin-data', {
+            method: 'GET',
+            headers: {
+                'Origin': 'http://127.0.0.1:5500'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const submissions = data.submissions || [];
+            
+            // Clear existing booked slots
+            calendarData.bookedSlots.clear();
+            
+            // Add actual booked slots from database
+            submissions.forEach(submission => {
+                if (submission.timeSlot) {
+                    calendarData.bookedSlots.add(submission.timeSlot);
+                }
+            });
+            
+            console.log(`Loaded ${calendarData.bookedSlots.size} booked slots from database`);
+        }
+    } catch (error) {
+        console.error('Error loading booked slots:', error);
+    }
+}
+
+// Refresh calendar with updated booked slots
+async function refreshCalendar() {
+    await loadBookedSlots();
+    generateTimeSlotsForDate(calendarData.availableDates[calendarData.currentDateIndex]);
+}
+
 // Initialize with smooth entrance animations
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load actual booked slots from database
+    await loadBookedSlots();
+    
     // Force input styling
     forceInputStyling();
     

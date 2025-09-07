@@ -9,6 +9,70 @@ Parameters:
     Description: 'Environment name'
 
 Resources:
+  # Cognito User Pool for Admin Authentication
+  AdminUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub 'tes-connections-admin-pool-${Environment}'
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+
+  # Cognito User Pool Client
+  AdminUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref AdminUserPool
+      ClientName: !Sub 'tes-connections-admin-client-${Environment}'
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      SupportedIdentityProviders:
+        - COGNITO
+      CallbackURLs:
+        - !Sub 'https://${WebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com/admin.html'
+        - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/admin.html'
+        - !Sub 'https://tesconnections.com/admin.html'
+        - 'http://localhost:5500/admin.html'
+      LogoutURLs:
+        - !Sub 'https://${WebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com/admin.html'
+        - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/admin.html'
+        - !Sub 'https://tesconnections.com/admin.html'
+        - 'http://localhost:5500/admin.html'
+      AllowedOAuthFlows:
+        - implicit
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+
+  # Cognito User Pool Domain
+  AdminUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref AdminUserPool
+      Domain: !Sub 'tes-connections-admin-${Environment}-${AWS::AccountId}'
+
   # DynamoDB Table
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
@@ -125,6 +189,19 @@ Resources:
                   - kms:Decrypt
                   - kms:GenerateDataKey
                 Resource: !GetAtt DynamoDBKey.Arn
+        - PolicyName: CognitoAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:AdminListGroupsForUser
+                  - cognito-idp:AdminConfirmSignUp
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                Resource: !GetAtt AdminUserPool.Arn
 
   # Lambda Function
   FormSubmissionLambda:
@@ -233,10 +310,12 @@ Resources:
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref ConnectionsTable
+          COGNITO_USER_POOL_ID: !Ref AdminUserPool
+          AWS_REGION: !Ref AWS::Region
       Timeout: 30
       MemorySize: 256
 
-  # API Gateway
+  # API Gateway (existing)
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -246,7 +325,18 @@ Resources:
         Types:
           - REGIONAL
 
-  # API Gateway Resource
+  # Cognito Authorizer for API Gateway
+  CognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: !Sub 'tes-connections-cognito-authorizer-${Environment}'
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      RestApiId: !Ref ApiGateway
+      ProviderARNs:
+        - !GetAtt AdminUserPool.Arn
+
+  # API Gateway Resource for form submissions
   ApiResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -254,7 +344,23 @@ Resources:
       ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: submit-contact
 
-  # API Gateway Method
+  # Admin Data Resource
+  AdminDataResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: admin-data
+
+  # Delete Submission Resource
+  DeleteSubmissionResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: delete-submission
+
+  # API Gateway Method for form submissions (public)
   ApiMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -273,12 +379,90 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
 
-  # OPTIONS Method for CORS
+  # OPTIONS Method for CORS (form submissions)
   ApiOptionsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref ApiGateway
       ResourceId: !Ref ApiResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # Admin Data GET Method (protected)
+  AdminDataGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref AdminDataResource
+      HttpMethod: GET
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # Admin Data OPTIONS Method
+  AdminDataOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref AdminDataResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # Delete Submission Method (protected)
+  DeleteSubmissionMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref DeleteSubmissionResource
+      HttpMethod: DELETE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # Delete Submission OPTIONS Method
+  DeleteSubmissionOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref DeleteSubmissionResource
       HttpMethod: OPTIONS
       AuthorizationType: NONE
       Integration:
@@ -307,6 +491,10 @@ Resources:
     DependsOn:
       - ApiMethod
       - ApiOptionsMethod
+      - AdminDataGetMethod
+      - AdminDataOptionsMethod
+      - DeleteSubmissionMethod
+      - DeleteSubmissionOptionsMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment
@@ -349,6 +537,12 @@ Outputs:
     Export:
       Name: !Sub '${AWS::StackName}-ApiUrl'
 
+  AdminApiGatewayUrl:
+    Description: 'API Gateway URL for admin endpoints'
+    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-AdminApiUrl'
+
   WebsiteUrl:
     Description: 'S3 Website URL'
     Value: !GetAtt WebsiteBucket.WebsiteURL
@@ -366,3 +560,21 @@ Outputs:
     Value: !GetAtt FormSubmissionLambda.Arn
     Export:
       Name: !Sub '${AWS::StackName}-LambdaArn'
+
+  CognitoUserPoolId:
+    Description: 'Cognito User Pool ID for admin authentication'
+    Value: !Ref AdminUserPool
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolId'
+
+  CognitoUserPoolClientId:
+    Description: 'Cognito User Pool Client ID'
+    Value: !Ref AdminUserPoolClient
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolClientId'
+
+  CognitoUserPoolDomain:
+    Description: 'Cognito User Pool Domain'
+    Value: !Sub 'https://${AdminUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com'
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolDomain'

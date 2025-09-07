@@ -8,6 +8,9 @@ from botocore.exceptions import ClientError
 import os
 import hashlib
 import time
+import jwt
+import requests
+from urllib.parse import urlparse
 
 # Initialize DynamoDB
 dynamodb = boto3.resource('dynamodb')
@@ -24,6 +27,105 @@ ALLOWED_ORIGINS = [
     'http://localhost:5500',
     'http://127.0.0.1:5500'
 ]
+
+# Cognito configuration
+COGNITO_USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID', '')
+COGNITO_REGION = os.environ.get('AWS_REGION', 'us-west-1')
+
+def get_cognito_public_keys():
+    """
+    Get Cognito public keys for JWT verification
+    """
+    try:
+        url = f'https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}/.well-known/jwks.json'
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Error fetching Cognito public keys: {e}")
+        return None
+
+def verify_jwt_token(token):
+    """
+    Verify JWT token from Cognito
+    """
+    try:
+        # Remove 'Bearer ' prefix if present
+        if token.startswith('Bearer '):
+            token = token[7:]
+        
+        # Get public keys
+        public_keys = get_cognito_public_keys()
+        if not public_keys:
+            return False, "Unable to verify token"
+        
+        # Decode token header to get key ID
+        unverified_header = jwt.get_unverified_header(token)
+        key_id = unverified_header.get('kid')
+        
+        if not key_id:
+            return False, "Invalid token header"
+        
+        # Find the correct public key
+        public_key = None
+        for key in public_keys['keys']:
+            if key['kid'] == key_id:
+                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
+                break
+        
+        if not public_key:
+            return False, "Public key not found"
+        
+        # Verify and decode the token
+        decoded_token = jwt.decode(
+            token,
+            public_key,
+            algorithms=['RS256'],
+            audience=None,  # Cognito doesn't use audience
+            issuer=f'https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}',
+            options={"verify_exp": True}
+        )
+        
+        return True, decoded_token
+        
+    except jwt.ExpiredSignatureError:
+        return False, "Token has expired"
+    except jwt.InvalidTokenError as e:
+        return False, f"Invalid token: {str(e)}"
+    except Exception as e:
+        print(f"JWT verification error: {e}")
+        return False, "Token verification failed"
+
+def is_admin_endpoint(path):
+    """
+    Check if the request is for an admin endpoint
+    """
+    admin_paths = ['/admin-data', '/delete-submission']
+    return any(path.endswith(admin_path) for admin_path in admin_paths)
+
+def validate_admin_access(event):
+    """
+    Validate admin access for protected endpoints
+    """
+    if not is_admin_endpoint(event.get('path', '')):
+        return True, None
+    
+    # Check for Authorization header
+    headers = event.get('headers', {})
+    auth_header = headers.get('Authorization') or headers.get('authorization')
+    
+    if not auth_header:
+        return False, "Authorization header missing"
+    
+    # Verify JWT token
+    is_valid, result = verify_jwt_token(auth_header)
+    
+    if not is_valid:
+        return False, result
+    
+    # Check if user has admin privileges (you can add custom claims here)
+    # For now, any authenticated user is considered admin
+    return True, result
 
 def sanitize_input(text, max_length=1000):
     """
@@ -124,7 +226,7 @@ def get_cors_headers(origin):
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-            'Access-Control-Allow-Methods': 'POST,OPTIONS',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
             'Access-Control-Max-Age': '86400'
         }
     else:
@@ -132,13 +234,68 @@ def get_cors_headers(origin):
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': 'null',
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'POST,OPTIONS'
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
         }
+
+def get_admin_data():
+    """
+    Retrieve all form submissions for admin dashboard
+    """
+    try:
+        # Scan DynamoDB table to get all items
+        response = table.scan()
+        items = response.get('Items', [])
+        
+        # Process items to match admin dashboard format
+        submissions = []
+        for item in items:
+            # Skip rate limit entries
+            item_id = item.get('id', '')
+            if item_id.startswith('rate_limit'):
+                continue
+                
+            # Determine type based on whether it has a meeting time
+            time_slot = item.get('timeSlot')
+            submission_type = 'meeting' if time_slot else 'connection'
+            
+            submission = {
+                'id': item_id,
+                'name': item['name'],
+                'communication': item['communication'],
+                'info': item.get('info', ''),
+                'comments': item.get('comments', ''),
+                'timeSlot': time_slot,
+                'timestamp': item['createdAt'],
+                'type': submission_type
+            }
+            submissions.append(submission)
+        
+        # Sort by creation date (newest first)
+        submissions.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return submissions
+        
+    except Exception as e:
+        print(f"Error retrieving admin data: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return []
+
+def delete_submission(submission_id):
+    """
+    Delete a submission from DynamoDB
+    """
+    try:
+        table.delete_item(Key={'id': submission_id})
+        return True
+    except Exception as e:
+        print(f"Error deleting submission: {e}")
+        return False
 
 def lambda_handler(event, context):
     """
-    AWS Lambda function to handle form submissions and store data in DynamoDB
-    Enhanced with security measures
+    AWS Lambda function to handle form submissions, admin data, and store data in DynamoDB
+    Enhanced with security measures and Cognito authentication
     """
     
     # Get origin for CORS
@@ -152,6 +309,88 @@ def lambda_handler(event, context):
             'headers': cors_headers,
             'body': json.dumps({'message': 'CORS preflight successful'})
         }
+    
+    # Validate admin access for protected endpoints
+    admin_access_valid, admin_error = validate_admin_access(event)
+    if not admin_access_valid:
+        return {
+            'statusCode': 401,
+            'headers': cors_headers,
+            'body': json.dumps({
+                'error': 'Unauthorized',
+                'message': admin_error
+            })
+        }
+    
+    # Handle admin data requests
+    if event['httpMethod'] == 'GET' and '/admin-data' in event.get('path', ''):
+        try:
+            submissions = get_admin_data()
+            return {
+                'statusCode': 200,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'submissions': submissions,
+                    'count': len(submissions)
+                })
+            }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'error': 'Failed to retrieve admin data',
+                    'message': str(e)
+                })
+            }
+    
+    # Handle delete requests
+    if event['httpMethod'] == 'DELETE' and '/delete-submission' in event.get('path', ''):
+        try:
+            if isinstance(event['body'], str):
+                body = json.loads(event['body'])
+            else:
+                body = event['body']
+            
+            submission_id = body.get('id')
+            if not submission_id:
+                return {
+                    'statusCode': 400,
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'error': 'Missing submission ID',
+                        'message': 'Submission ID is required'
+                    })
+                }
+            
+            success = delete_submission(submission_id)
+            if success:
+                return {
+                    'statusCode': 200,
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'message': 'Submission deleted successfully',
+                        'id': submission_id
+                    })
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'error': 'Failed to delete submission',
+                        'message': 'Could not delete the submission'
+                    })
+                }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'error': 'Delete request failed',
+                    'message': str(e)
+                })
+            }
     
     try:
         # Security: Check request size
@@ -239,6 +478,7 @@ def lambda_handler(event, context):
             'communication': body['communication'],
             'info': sanitized_info,
             'comments': sanitized_comments,
+            'timeSlot': body.get('timeSlot'),  # Add timeSlot for meetings
             'timestamp': body.get('timestamp', datetime.utcnow().isoformat()),
             'userAgent': sanitize_input(body.get('userAgent', ''), 200),
             'referrer': sanitize_input(body.get('referrer', ''), 200),
