@@ -173,9 +173,24 @@ def validate_admin_access(event):
     # Check for Authorization header
     headers = event.get('headers', {})
     auth_header = headers.get('Authorization') or headers.get('authorization')
-    
+
+    # Fallback: allow token in query string to avoid CORS preflight (e.g., ?token=...)
     if not auth_header:
-        return False, "Authorization header missing"
+        qs = event.get('queryStringParameters') or {}
+        query_token = None
+        if isinstance(qs, dict):
+            query_token = qs.get('token') or qs.get('auth') or qs.get('authorization')
+        if query_token:
+            # Try PIN authentication first
+            is_valid, result = verify_pin_token(query_token)
+            if is_valid:
+                return True, result
+            # Fallback to Cognito JWT verification
+            is_valid, result = verify_jwt_token(query_token)
+            if is_valid:
+                return True, result
+        else:
+            return False, "Authorization header missing"
     
     # Try PIN authentication first
     is_valid, result = verify_pin_token(auth_header)

@@ -480,18 +480,14 @@ async function fetchAdminData() {
             } catch (_) {}
             return [];
         }
-        const headers = {
-            'Content-Type': 'application/json',
-        };
-        
-        // Add authorization header if authenticated
+        // Avoid sending Content-Type on GET; pass token via query to prevent preflight
+        let url = CONFIG.ADMIN_ENDPOINT;
         if (isAuthenticated && authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-        } else {
+            const sep = url.includes('?') ? '&' : '?';
+            url = `${url}${sep}token=${encodeURIComponent(authToken)}`;
         }
-        const response = await fetch(CONFIG.ADMIN_ENDPOINT, {
-            method: 'GET',
-            headers: headers
+        const response = await fetch(url, {
+            method: 'GET'
         });
         
         // Gracefully handle unauthorized in hosted env
@@ -1109,20 +1105,17 @@ async function deleteItem(id) {
 
 // Delete from API
 async function deleteFromAPI(id) {
-    const headers = {
-        'Content-Type': 'application/json',
-    };
-    
-    // Add authorization header if authenticated
+    // Use query params to avoid DELETE body/preflight
+    let url = CONFIG.DELETE_ENDPOINT;
+    const params = new URLSearchParams();
+    params.set('id', id);
     if (isAuthenticated && authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+        params.set('token', authToken);
     }
-    
-    const response = await fetch(CONFIG.DELETE_ENDPOINT, {
-        method: 'DELETE',
-        headers: headers,
-        body: JSON.stringify({ id: id }),
-        mode: 'cors'
+    const sep = url.includes('?') ? '&' : '?';
+    url = `${url}${sep}${params.toString()}`;
+    const response = await fetch(url, {
+        method: 'DELETE'
     });
     
     if (!response.ok) {
