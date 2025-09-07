@@ -33,19 +33,22 @@
     --font-primary: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-secondary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     
-    /* Spacing */
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
-    --spacing-2xl: 3rem;
+    /* Spacing - Fibonacci Ratios */
+    --spacing-xs: 0.125rem;    /* 2px - F1 */
+    --spacing-sm: 0.25rem;     /* 4px - F2 */
+    --spacing-md: 0.5rem;       /* 8px - F3 */
+    --spacing-lg: 0.75rem;      /* 12px - F4 */
+    --spacing-xl: 1.25rem;      /* 20px - F5 */
+    --spacing-2xl: 2rem;        /* 32px - F6 */
+    --spacing-3xl: 3.25rem;     /* 52px - F7 */
+    --spacing-4xl: 5.25rem;     /* 84px - F8 */
     
-    /* Border Radius */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
+    /* Border Radius - Fibonacci Ratios */
+    --radius-xs: 0.125rem;     /* 2px - F1 */
+    --radius-sm: 0.25rem;      /* 4px - F2 */
+    --radius-md: 0.5rem;       /* 8px - F3 */
+    --radius-lg: 0.75rem;       /* 12px - F4 */
+    --radius-xl: 1.25rem;       /* 20px - F5 */
     
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -177,10 +180,10 @@ body {
     flex: 1;
     max-width: 400px;
     margin: 0 auto;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl);
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-2xl);
 }
 
 /* Conference Banner */
@@ -294,13 +297,13 @@ body {
 .form-card {
     background: var(--secondary-black);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-2xl);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .form-header {
     text-align: center;
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-2xl);
 }
 
 .form-title {
@@ -323,7 +326,7 @@ body {
 }
 
 .input-label {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     font-weight: 500;
 }
 
@@ -339,24 +342,145 @@ body {
 
 .form-input {
     width: 100%;
-    background: var(--primary-black);
+    background: var(--primary-black) !important;
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
-    font-size: 1rem;
-    color: var(--primary-white);
+    padding: var(--spacing-md);
+    font-size: 0.95rem;
+    color: var(--primary-white) !important;
     font-family: var(--font-secondary);
     transition: all 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-smooth: always;
+    -webkit-text-stroke: 0.01em transparent;
+    caret-color: var(--primary-white);
+    outline: none;
+    height: 44px;
 }
 
 .form-input:focus {
     outline: none;
     border-color: var(--electric-blue);
     box-shadow: var(--shadow-electric);
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+}
+
+.form-input:not(:placeholder-shown) {
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+}
+
+/* Handle autofill and browser defaults */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--primary-black) inset !important;
+    -webkit-text-fill-color: var(--primary-white) !important;
+    background-color: var(--primary-black) !important;
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Additional autofill overrides */
+.form-input:-webkit-autofill::first-line {
+    color: var(--primary-white) !important;
+}
+
+/* Disable autocomplete styling completely */
+.form-input[autocomplete] {
+    background: var(--primary-black) !important;
+    background-color: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+}
+
+/* Additional tel input autofill handling */
+input[type="tel"].form-input:-webkit-autofill,
+input[type="tel"].form-input:-webkit-autofill:hover,
+input[type="tel"].form-input:-webkit-autofill:focus,
+input[type="tel"].form-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--primary-black) inset !important;
+    -webkit-text-fill-color: var(--primary-white) !important;
+    background-color: var(--primary-black) !important;
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+input[type="tel"].form-input:-webkit-autofill::first-line {
+    color: var(--primary-white) !important;
+}
+
+/* Additional states to ensure consistency */
+.form-input:valid,
+.form-input:invalid,
+.form-input:enabled,
+.form-input:disabled {
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+}
+
+/* Universal input styling override */
+input[type="text"].form-input,
+input[type="email"].form-input,
+input[type="tel"].form-input,
+input[type="url"].form-input {
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+    background-color: var(--primary-black) !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    text-rendering: optimizeLegibility !important;
+    font-smooth: always !important;
+    -webkit-text-stroke: 0.01em transparent !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+}
+
+/* Nuclear option - override everything */
+.form-input,
+.form-input *,
+.form-input::before,
+.form-input::after,
+.form-input::-webkit-input-placeholder,
+.form-input::-moz-placeholder,
+.form-input:-ms-input-placeholder,
+.form-input:-moz-placeholder {
+    background: var(--primary-black) !important;
+    background-color: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
 }
 
 .form-input::placeholder {
     color: var(--accent-gray);
+}
+
+/* Custom text selection styling for inputs */
+.form-input::selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--primary-white);
+}
+
+.form-input::-moz-selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--primary-white);
+}
+
+/* Remove default selection styling */
+.form-input::-webkit-selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--primary-white);
 }
 
 .input-border {
@@ -381,26 +505,76 @@ body {
 
 .form-textarea {
     width: 100%;
-    background: var(--primary-black);
+    background: var(--primary-black) !important;
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     font-size: 1rem;
-    color: var(--primary-white);
+    color: var(--primary-white) !important;
     font-family: var(--font-secondary);
     resize: vertical;
     min-height: 120px;
     transition: all 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-smooth: always;
+    -webkit-text-stroke: 0.01em transparent;
+    caret-color: var(--primary-white);
+    outline: none;
 }
 
 .form-textarea:focus {
     outline: none;
     border-color: var(--electric-blue);
     box-shadow: var(--shadow-electric);
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+}
+
+.form-textarea:not(:placeholder-shown) {
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+}
+
+/* Handle autofill and browser defaults for textarea */
+.form-textarea:-webkit-autofill,
+.form-textarea:-webkit-autofill:hover,
+.form-textarea:-webkit-autofill:focus,
+.form-textarea:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--primary-black) inset !important;
+    -webkit-text-fill-color: var(--primary-white) !important;
+    background-color: var(--primary-black) !important;
+    color: var(--primary-white) !important;
+}
+
+/* Additional states to ensure consistency for textarea */
+.form-textarea:valid,
+.form-textarea:invalid,
+.form-textarea:enabled,
+.form-textarea:disabled {
+    background: var(--primary-black) !important;
+    color: var(--primary-white) !important;
 }
 
 .form-textarea::placeholder {
     color: var(--accent-gray);
+}
+
+/* Custom text selection styling for textarea */
+.form-textarea::selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--primary-white);
+}
+
+.form-textarea::-moz-selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--primary-white);
+}
+
+.form-textarea::-webkit-selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--primary-white);
 }
 
 .textarea-border {
@@ -421,7 +595,7 @@ body {
 /* Communication Options */
 .communication-options {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
 }
@@ -526,7 +700,7 @@ body {
     background: var(--accent-gradient);
     border: none;
     border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--primary-white);
@@ -870,6 +1044,30 @@ body {
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+/* Mobile-first: Ensure communication options stay on one line */
+@media (max-width: 767px) {
+    .communication-options {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-xs);
+    }
+    
+    .option-card {
+        padding: var(--spacing-sm);
+        min-height: 60px;
+    }
+    
+    .option-icon {
+        width: 20px;
+        height: 20px;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .option-text {
+        font-size: 0.7rem;
+        line-height: 1.1;
+    }
 }
 
 /* Responsive Design */

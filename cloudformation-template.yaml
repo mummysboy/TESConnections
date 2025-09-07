@@ -36,6 +36,42 @@ Resources:
             ProjectionType: ALL
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+        KMSMasterKeyId: !GetAtt DynamoDBKey.Arn
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: TESConnections
+        - Key: Security
+          Value: Encrypted
+
+  # KMS Key for DynamoDB encryption
+  DynamoDBKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub 'KMS key for TESConnections DynamoDB encryption - ${Environment}'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow DynamoDB
+            Effect: Allow
+            Principal:
+              Service: dynamodb.amazonaws.com
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: '*'
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -80,6 +116,15 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource: '*'
+        - PolicyName: KMSAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:GenerateDataKey
+                Resource: !GetAtt DynamoDBKey.Arn
 
   # Lambda Function
   FormSubmissionLambda:

@@ -25,6 +25,7 @@ const communicationField = document.getElementById('communication');
 const infoField = document.getElementById('info');
 const commentsField = document.getElementById('comments');
 
+
 // Communication option cards
 const optionCards = document.querySelectorAll('.option-card');
 
@@ -428,6 +429,22 @@ nameField.addEventListener('blur', () => {
 });
 
 nameField.addEventListener('input', () => {
+    // Capitalize first letter of each word
+    if (nameField.value.length > 0) {
+        const words = nameField.value.split(' ');
+        const capitalizedWords = words.map(word => {
+            if (word.length > 0) {
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }
+            return word;
+        });
+        const capitalizedText = capitalizedWords.join(' ');
+        
+        if (nameField.value !== capitalizedText) {
+            nameField.value = capitalizedText;
+        }
+    }
+    
     if (nameError.textContent) {
         validateField('name', nameField.value);
     }
@@ -572,8 +589,47 @@ form.addEventListener('submit', () => {
     }, 100);
 });
 
+// Force input styling to stay black with white text
+function forceInputStyling() {
+    const inputs = document.querySelectorAll('.form-input, .form-textarea');
+    inputs.forEach(input => {
+        // Force styling on various events
+        const forceStyle = () => {
+            input.style.backgroundColor = '#0a0a0a';
+            input.style.color = '#ffffff';
+            input.style.background = '#0a0a0a';
+        };
+        
+        // Apply on multiple events
+        input.addEventListener('input', forceStyle);
+        input.addEventListener('change', forceStyle);
+        input.addEventListener('focus', forceStyle);
+        input.addEventListener('blur', forceStyle);
+        input.addEventListener('keyup', forceStyle);
+        input.addEventListener('keydown', forceStyle);
+        
+        // Apply immediately
+        forceStyle();
+        
+        // Use MutationObserver to catch any style changes
+        const observer = new MutationObserver(() => {
+            if (input.style.backgroundColor !== '#0a0a0a' || input.style.color !== '#ffffff') {
+                forceStyle();
+            }
+        });
+        
+        observer.observe(input, {
+            attributes: true,
+            attributeFilter: ['style']
+        });
+    });
+}
+
 // Initialize with smooth entrance animations
 document.addEventListener('DOMContentLoaded', () => {
+    // Force input styling
+    forceInputStyling();
+    
     // Animate elements on load
     const elements = document.querySelectorAll('.hero-card, .form-card');
     elements.forEach((element, index) => {
