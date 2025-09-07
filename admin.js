@@ -1121,7 +1121,8 @@ async function deleteFromAPI(id) {
     const response = await fetch(CONFIG.DELETE_ENDPOINT, {
         method: 'DELETE',
         headers: headers,
-        body: JSON.stringify({ id: id })
+        body: JSON.stringify({ id: id }),
+        mode: 'cors'
     });
     
     if (!response.ok) {

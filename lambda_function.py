@@ -355,8 +355,9 @@ def lambda_handler(event, context):
     Enhanced with security measures and Cognito authentication
     """
     
-    # Get origin for CORS
-    origin = event.get('headers', {}).get('origin', '')
+    # Get origin for CORS (handle different header casings)
+    headers_in = event.get('headers', {}) or {}
+    origin = headers_in.get('origin') or headers_in.get('Origin') or ''
     cors_headers = get_cors_headers(origin)
     
     # Handle preflight OPTIONS request
