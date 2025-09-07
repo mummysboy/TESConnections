@@ -4,7 +4,7 @@
 const COGNITO_CONFIG = {
     // These will be populated from CloudFormation outputs
     userPoolId: 'us-west-1_NFh1iQlAb', // Updated with actual Cognito User Pool ID
-    userPoolClientId: '6kp9sd3shskgf873k6g12fjqp4', // Updated with actual Client ID
+    userPoolClientId: '7ht4bhg5016dbd337ukmv6947e', // Updated with new Client ID
     region: 'us-west-1'
 };
 
