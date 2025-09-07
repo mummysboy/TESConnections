@@ -303,7 +303,10 @@ function removePinDigit() {
 async function submitPin() {
     if (pinEntry.length !== 4) return;
     
+    console.log('=== PIN AUTHENTICATION DEBUG ===');
     console.log('Submitting PIN for authentication...');
+    console.log('PIN_AUTH_ENDPOINT:', CONFIG.PIN_AUTH_ENDPOINT);
+    console.log('PIN length:', pinEntry.length);
     
     try {
         showPinLoading(true);
@@ -319,6 +322,7 @@ async function submitPin() {
         });
         
         console.log('PIN auth response status:', response.status);
+        console.log('PIN auth response headers:', Object.fromEntries(response.headers.entries()));
         
         const data = await response.json();
         console.log('PIN auth response data:', data);
@@ -329,6 +333,8 @@ async function submitPin() {
             isAuthenticated = true;
             
             console.log('PIN authentication successful, storing token');
+            console.log('Token length:', authToken.length);
+            console.log('Token preview:', authToken.substring(0, 20) + '...');
             
             // Store authentication state in localStorage
             localStorage.setItem('admin_authenticated', 'true');
@@ -352,6 +358,11 @@ async function submitPin() {
         }
     } catch (error) {
         console.error('PIN authentication error:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         showPinError(`Authentication failed: ${error.message}`);
     } finally {
         showPinLoading(false);
@@ -578,12 +589,20 @@ function setupEventListeners() {
 
 // Load data from API
 async function loadData() {
+    console.log('=== LOAD DATA DEBUG ===');
     console.log('Loading admin data...');
+    console.log('Current authentication state:', {
+        isAuthenticated: isAuthenticated,
+        hasToken: !!authToken,
+        tokenType: authToken === 'test-token' ? 'test' : 'real'
+    });
+    
     showLoading(true);
     
     try {
         const data = await fetchAdminData();
         console.log('Fetched data:', data);
+        console.log('Data length:', data.length);
         
         if (data.length === 0) {
             console.log('No data found in database');
@@ -620,11 +639,18 @@ async function loadData() {
             connectionsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
         
+        console.log('About to update stats and render tables');
         updateStats();
         renderTables();
+        console.log('Stats updated and tables rendered');
         
     } catch (error) {
         console.error('Error in loadData:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         showError(`Failed to load data: ${error.message}`);
     } finally {
         showLoading(false);
@@ -634,8 +660,15 @@ async function loadData() {
 // Fetch data from API
 async function fetchAdminData() {
     try {
+        console.log('=== FETCH ADMIN DATA DEBUG ===');
+        console.log('IS_LOCAL:', IS_LOCAL);
+        console.log('isAuthenticated:', isAuthenticated);
+        console.log('authToken:', authToken ? 'present' : 'missing');
+        console.log('ADMIN_ENDPOINT:', CONFIG.ADMIN_ENDPOINT);
+        
         // In local development, load mock data
         if (IS_LOCAL) {
+            console.log('Loading mock data for local development');
             try {
                 const resp = await fetch('admin-sample.json', { cache: 'no-store' });
                 if (resp.ok) {
@@ -678,13 +711,19 @@ async function fetchAdminData() {
         url = `${url}${sep}token=${encodeURIComponent(authToken)}`;
         
         console.log('Fetching admin data from:', url);
+        console.log('Token length:', authToken.length);
+        console.log('Token preview:', authToken.substring(0, 20) + '...');
         
         const response = await fetch(url, {
             method: 'GET',
-            mode: 'cors'
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json'
+            }
         });
         
         console.log('Admin data response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
         
         // Handle authentication errors
         if (response.status === 401) {
@@ -707,13 +746,18 @@ async function fetchAdminData() {
         
         const data = await response.json();
         console.log('Received admin data:', data);
+        console.log('Data type:', typeof data);
+        console.log('Is array:', Array.isArray(data));
         
         // Handle different response formats
         if (Array.isArray(data)) {
+            console.log('Returning data as array, length:', data.length);
             return data;
         } else if (data.submissions) {
+            console.log('Returning data.submissions, length:', data.submissions.length);
             return data.submissions;
         } else if (data.data) {
+            console.log('Returning data.data, length:', data.data.length);
             return data.data;
         } else {
             console.warn('Unexpected data format:', data);
@@ -722,6 +766,11 @@ async function fetchAdminData() {
         
     } catch (error) {
         console.error('Error fetching admin data:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         if (!IS_LOCAL) {
             showError(`Failed to load data: ${error.message}`);
         }
@@ -1531,6 +1580,94 @@ function setupModal() {
     }
 }
 
+
+// Test API endpoints directly
+window.testAdminAPI = async function() {
+    console.log('=== TESTING ADMIN API ENDPOINTS ===');
+    
+    // Test PIN auth endpoint
+    console.log('Testing PIN auth endpoint...');
+    try {
+        const pinResponse = await fetch(CONFIG.PIN_AUTH_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pin: '1234' }),
+            mode: 'cors'
+        });
+        
+        console.log('PIN auth response status:', pinResponse.status);
+        const pinData = await pinResponse.json();
+        console.log('PIN auth response data:', pinData);
+        
+        if (pinData.success && pinData.sessionToken) {
+            console.log('PIN auth successful! Testing admin-data endpoint...');
+            
+            // Test admin-data endpoint
+            const adminUrl = `${CONFIG.ADMIN_ENDPOINT}?token=${encodeURIComponent(pinData.sessionToken)}`;
+            console.log('Testing admin-data endpoint:', adminUrl);
+            
+            const adminResponse = await fetch(adminUrl, {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            console.log('Admin data response status:', adminResponse.status);
+            const adminData = await adminResponse.json();
+            console.log('Admin data response:', adminData);
+            
+            return {
+                pinAuth: { status: pinResponse.status, data: pinData },
+                adminData: { status: adminResponse.status, data: adminData }
+            };
+        } else {
+            console.error('PIN auth failed, cannot test admin-data endpoint');
+            return { pinAuth: { status: pinResponse.status, data: pinData } };
+        }
+    } catch (error) {
+        console.error('API test error:', error);
+        return { error: error.message };
+    }
+};
+
+// Test admin data endpoint with current token
+window.testAdminData = async function() {
+    console.log('=== TESTING ADMIN DATA WITH CURRENT TOKEN ===');
+    console.log('Current token:', authToken ? 'present' : 'missing');
+    
+    if (!authToken) {
+        console.error('No authentication token available');
+        return;
+    }
+    
+    try {
+        const url = `${CONFIG.ADMIN_ENDPOINT}?token=${encodeURIComponent(authToken)}`;
+        console.log('Testing URL:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        return { status: response.status, data: data };
+    } catch (error) {
+        console.error('Test error:', error);
+        return { error: error.message };
+    }
+};
 
 // Add CSS animations
 const style = document.createElement('style');

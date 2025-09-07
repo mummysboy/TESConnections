@@ -107,9 +107,12 @@ def verify_pin_token(token):
     Verify PIN-based session token
     """
     try:
+        print(f"Verifying PIN token: {token[:20]}... (length: {len(token)})")
+        
         # Remove 'Bearer ' prefix if present
         if token.startswith('Bearer '):
             token = token[7:]
+            print(f"Removed Bearer prefix, token now: {token[:20]}...")
         
         # Decode the token
         decoded_token = jwt.decode(
@@ -119,41 +122,58 @@ def verify_pin_token(token):
             options={"verify_exp": True}
         )
         
+        print(f"Token decoded successfully: {decoded_token}")
+        
         # Check if token is still valid
         if decoded_token.get('type') != 'pin_session':
+            print(f"Invalid token type: {decoded_token.get('type')}")
             return False, "Invalid token type"
         
+        print("PIN token verification successful")
         return True, decoded_token
         
     except jwt.ExpiredSignatureError:
+        print("PIN session has expired")
         return False, "PIN session has expired"
     except jwt.InvalidTokenError as e:
+        print(f"Invalid PIN token: {str(e)}")
         return False, f"Invalid PIN token: {str(e)}"
     except Exception as e:
+        print(f"PIN token verification failed: {str(e)}")
         return False, "PIN token verification failed"
 
 def generate_pin_session_token():
     """
     Generate a PIN-based session token
     """
+    now = datetime.utcnow()
     payload = {
         'type': 'pin_session',
         'user': 'admin',
-        'iat': datetime.utcnow(),
-        'exp': datetime.utcnow() + timedelta(seconds=PIN_SESSION_DURATION),
+        'iat': now,
+        'exp': now + timedelta(seconds=PIN_SESSION_DURATION),
         'jti': str(uuid.uuid4())  # Unique token ID
     }
     
+    print(f"Generating PIN session token with payload: {payload}")
     token = jwt.encode(payload, PIN_SESSION_SECRET, algorithm='HS256')
+    print(f"Generated token length: {len(token)}")
     return token
 
 def authenticate_pin(pin):
     """
     Authenticate PIN and return session token
     """
+    print(f"Authenticating PIN: {pin[:2]}** (length: {len(pin)})")
+    print(f"Expected PIN: {ADMIN_PIN[:2]}** (length: {len(ADMIN_PIN)})")
+    print(f"PIN match: {pin == ADMIN_PIN}")
+    
     if pin == ADMIN_PIN:
-        return True, generate_pin_session_token()
+        token = generate_pin_session_token()
+        print(f"PIN authentication successful, generated token")
+        return True, token
     else:
+        print(f"PIN authentication failed: Invalid PIN")
         return False, "Invalid PIN"
 
 def is_admin_endpoint(path):
@@ -322,9 +342,11 @@ def get_admin_data():
     Retrieve all form submissions for admin dashboard
     """
     try:
+        print("Scanning DynamoDB table for admin data...")
         # Scan DynamoDB table to get all items
         response = table.scan()
         items = response.get('Items', [])
+        print(f"Retrieved {len(items)} items from DynamoDB")
         
         # Process items to match admin dashboard format
         submissions = []
@@ -332,6 +354,7 @@ def get_admin_data():
             # Skip rate limit entries
             item_id = item.get('id', '')
             if item_id.startswith('rate_limit'):
+                print(f"Skipping rate limit entry: {item_id}")
                 continue
                 
             # Determine type based on whether it has a meeting time
@@ -349,13 +372,18 @@ def get_admin_data():
                 'type': submission_type
             }
             submissions.append(submission)
+            print(f"Processed submission: {item_id} ({submission_type})")
+        
+        print(f"Total submissions processed: {len(submissions)}")
         
         # Sort by creation date (newest first)
         submissions.sort(key=lambda x: x['timestamp'], reverse=True)
         
+        print(f"Returning {len(submissions)} submissions sorted by timestamp")
         return submissions
         
     except Exception as e:
+        print(f"Error retrieving admin data: {str(e)}")
         return []
 
 def delete_submission(submission_id):

@@ -195,9 +195,15 @@ slotElement.innerHTML = `
     <div class="time-slot-time">${slot.time}</div>
 `;
 if (!slot.booked) {
-    slotElement.addEventListener('click', () => {
-selectTimeSlot(slot);
-    });
+    const handleTimeSlotSelection = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        selectTimeSlot(slot);
+    };
+    
+    // Add both click and touchstart events for better mobile support
+    slotElement.addEventListener('click', handleTimeSlotSelection);
+    slotElement.addEventListener('touchstart', handleTimeSlotSelection, { passive: false });
 }
 grid.appendChild(slotElement);
     });
@@ -500,30 +506,38 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
     }
 }
 
-// Communication option selection
+// Communication option selection with touch support
 optionCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-// Add ripple effect
-addRippleEffect(card, e);
-// Remove selection from all cards
-optionCards.forEach(c => c.classList.remove('selected'));
-// Add selection to clicked card
-card.classList.add('selected');
-// Update hidden input
-const value = card.getAttribute('data-value');
-communicationField.value = value;
-// Clear any communication errors
-clearError('communication');
-// Add haptic feedback if available
-if (navigator.vibrate) {
-    navigator.vibrate(50);
-}
-    });
+    const handleSelection = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Add ripple effect
+        addRippleEffect(card, e);
+        // Remove selection from all cards
+        optionCards.forEach(c => c.classList.remove('selected'));
+        // Add selection to clicked card
+        card.classList.add('selected');
+        // Update hidden input
+        const value = card.getAttribute('data-value');
+        communicationField.value = value;
+        // Clear any communication errors
+        clearError('communication');
+        // Add haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+    };
+    
+    // Add both click and touchstart events for better mobile support
+    card.addEventListener('click', handleSelection);
+    card.addEventListener('touchstart', handleSelection, { passive: false });
 });
 
-// Form submission
+// Form submission with mobile support
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     
     // Add ripple effect to submit button
     addRippleEffect(submitBtn, e);
@@ -699,19 +713,29 @@ const hamburgerMenu = document.getElementById('hamburgerMenu');
 const aboutModal = document.getElementById('aboutModal');
 const closeModal = document.getElementById('closeModal');
 
-// Open modal when hamburger menu is clicked
-hamburgerMenu.addEventListener('click', () => {
+// Open modal when hamburger menu is clicked with touch support
+const handleHamburgerClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     hamburgerMenu.classList.toggle('active');
     aboutModal.classList.add('active');
     document.body.style.overflow = 'hidden';
-});
+};
 
-// Close modal when close button is clicked
-closeModal.addEventListener('click', () => {
+hamburgerMenu.addEventListener('click', handleHamburgerClick);
+hamburgerMenu.addEventListener('touchstart', handleHamburgerClick, { passive: false });
+
+// Close modal when close button is clicked with touch support
+const handleCloseModal = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     hamburgerMenu.classList.remove('active');
     aboutModal.classList.remove('active');
     document.body.style.overflow = '';
-});
+};
+
+closeModal.addEventListener('click', handleCloseModal);
+closeModal.addEventListener('touchstart', handleCloseModal, { passive: false });
 
 // Close modal when clicking outside
 aboutModal.addEventListener('click', (e) => {
@@ -833,6 +857,41 @@ async function refreshCalendar() {
 
 // Initialize with smooth entrance animations
 document.addEventListener('DOMContentLoaded', async () => {
+    // Prevent context menu on long press for better mobile experience
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    
+    // Add mobile-specific optimizations
+    if ('ontouchstart' in window) {
+        // Disable hover effects on touch devices
+        document.body.classList.add('touch-device');
+        
+        // Prevent double-tap zoom on buttons
+        document.addEventListener('touchend', function(e) {
+            if (e.target.classList.contains('option-card') || 
+                e.target.classList.contains('time-slot') ||
+                e.target.classList.contains('nav-arrow') ||
+                e.target.classList.contains('submit-btn')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent scroll issues on mobile
+        document.addEventListener('touchmove', function(e) {
+            // Allow scrolling on the main container
+            if (e.target.closest('.app-main') || e.target.closest('.modal-content')) {
+                return;
+            }
+            // Prevent scrolling on interactive elements
+            if (e.target.classList.contains('option-card') || 
+                e.target.classList.contains('time-slot') ||
+                e.target.classList.contains('nav-arrow')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
+    
     // Initialize calendar elements
     selectedDayElement = document.getElementById('selectedDay');
     prevDayBtn = document.getElementById('prevDay');
@@ -852,9 +911,23 @@ return;
     // Initialize day navigation
     updateDayDisplay();
     
-    // Add event listeners for navigation buttons
-    prevDayBtn.addEventListener('click', navigateToPreviousDay);
-    nextDayBtn.addEventListener('click', navigateToNextDay);
+    // Add event listeners for navigation buttons with touch support
+    const handlePrevDay = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigateToPreviousDay();
+    };
+    
+    const handleNextDay = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigateToNextDay();
+    };
+    
+    prevDayBtn.addEventListener('click', handlePrevDay);
+    prevDayBtn.addEventListener('touchstart', handlePrevDay, { passive: false });
+    nextDayBtn.addEventListener('click', handleNextDay);
+    nextDayBtn.addEventListener('touchstart', handleNextDay, { passive: false });
     
     // Add keyboard navigation
     document.addEventListener('keydown', (e) => {
@@ -981,15 +1054,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (infoField) {
-        // Single press/click on the contact details opens the selected app
-        infoField.addEventListener('click', (e) => {
-            e.preventDefault();
-            openSelectedContactApp();
-        });
-        // Support touch devices
-        infoField.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            openSelectedContactApp();
-        }, { passive: false });
+        // Allow normal input behavior; provide an explicit helper icon in future if needed
     }
 });

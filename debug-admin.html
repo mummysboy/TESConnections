@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .debug-button:hover {
+            background: #0056b3;
+        }
+        .debug-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .success {
+            color: #28a745;
+        }
+        .warning {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h2>API Configuration</h2>
+        <div id="config-output" class="debug-output">Loading...</div>
+        <button class="debug-button" onclick="showConfig()">Show Configuration</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>PIN Authentication Test</h2>
+        <div id="pin-output" class="debug-output">Click "Test PIN Auth" to start...</div>
+        <button class="debug-button" onclick="testPinAuth()">Test PIN Auth</button>
+        <button class="debug-button" onclick="testPinAuthWithCustomPin()">Test with Custom PIN</button>
+        <input type="text" id="custom-pin" placeholder="Enter PIN" maxlength="4" style="padding: 8px; margin: 5px;">
+    </div>
+    
+    <div class="debug-section">
+        <h2>Admin Data Test</h2>
+        <div id="admin-output" class="debug-output">Click "Test Admin Data" to start...</div>
+        <button class="debug-button" onclick="testAdminData()">Test Admin Data</button>
+        <button class="debug-button" onclick="testAdminDataWithToken()">Test with Stored Token</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Network Connectivity</h2>
+        <div id="network-output" class="debug-output">Click "Test Network" to start...</div>
+        <button class="debug-button" onclick="testNetwork()">Test Network</button>
+        <button class="debug-button" onclick="testCORS()">Test CORS</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Local Storage</h2>
+        <div id="storage-output" class="debug-output">Click "Check Storage" to start...</div>
+        <button class="debug-button" onclick="checkStorage()">Check Storage</button>
+        <button class="debug-button" onclick="clearStorage()">Clear Storage</button>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact',
+            ADMIN_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/admin-data',
+            DELETE_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/delete-submission',
+            PIN_AUTH_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/pin-auth',
+        };
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            element.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function clearLog(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        function showConfig() {
+            clearLog('config-output');
+            log('config-output', 'API Configuration:', 'info');
+            log('config-output', `PIN_AUTH_ENDPOINT: ${CONFIG.PIN_AUTH_ENDPOINT}`, 'info');
+            log('config-output', `ADMIN_ENDPOINT: ${CONFIG.ADMIN_ENDPOINT}`, 'info');
+            log('config-output', `DELETE_ENDPOINT: ${CONFIG.DELETE_ENDPOINT}`, 'info');
+            log('config-output', `API_ENDPOINT: ${CONFIG.API_ENDPOINT}`, 'info');
+        }
+
+        async function testPinAuth() {
+            clearLog('pin-output');
+            log('pin-output', 'Testing PIN authentication with default PIN (1234)...', 'info');
+            
+            try {
+                const response = await fetch(CONFIG.PIN_AUTH_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pin: '1234' }),
+                    mode: 'cors'
+                });
+                
+                log('pin-output', `Response status: ${response.status}`, response.ok ? 'success' : 'error');
+                log('pin-output', `Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`, 'info');
+                
+                const data = await response.json();
+                log('pin-output', `Response data: ${JSON.stringify(data, null, 2)}`, 'info');
+                
+                if (data.success && data.sessionToken) {
+                    log('pin-output', 'PIN authentication successful!', 'success');
+                    log('pin-output', `Token length: ${data.sessionToken.length}`, 'info');
+                    log('pin-output', `Token preview: ${data.sessionToken.substring(0, 20)}...`, 'info');
+                    
+                    // Store token for testing
+                    localStorage.setItem('debug_token', data.sessionToken);
+                    log('pin-output', 'Token stored in localStorage for further testing', 'success');
+                } else {
+                    log('pin-output', 'PIN authentication failed', 'error');
+                }
+            } catch (error) {
+                log('pin-output', `Error: ${error.message}`, 'error');
+                log('pin-output', `Error details: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        }
+
+        async function testPinAuthWithCustomPin() {
+            const customPin = document.getElementById('custom-pin').value;
+            if (!customPin) {
+                log('pin-output', 'Please enter a PIN first', 'warning');
+                return;
+            }
+            
+            clearLog('pin-output');
+            log('pin-output', `Testing PIN authentication with custom PIN (${customPin})...`, 'info');
+            
+            try {
+                const response = await fetch(CONFIG.PIN_AUTH_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pin: customPin }),
+                    mode: 'cors'
+                });
+                
+                log('pin-output', `Response status: ${response.status}`, response.ok ? 'success' : 'error');
+                const data = await response.json();
+                log('pin-output', `Response data: ${JSON.stringify(data, null, 2)}`, 'info');
+                
+                if (data.success && data.sessionToken) {
+                    log('pin-output', 'Custom PIN authentication successful!', 'success');
+                    localStorage.setItem('debug_token', data.sessionToken);
+                } else {
+                    log('pin-output', 'Custom PIN authentication failed', 'error');
+                }
+            } catch (error) {
+                log('pin-output', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAdminData() {
+            clearLog('admin-output');
+            log('admin-output', 'Testing admin data endpoint without authentication...', 'info');
+            
+            try {
+                const response = await fetch(CONFIG.ADMIN_ENDPOINT, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                log('admin-output', `Response status: ${response.status}`, response.ok ? 'success' : 'error');
+                log('admin-output', `Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`, 'info');
+                
+                const data = await response.json();
+                log('admin-output', `Response data: ${JSON.stringify(data, null, 2)}`, 'info');
+                
+                if (response.status === 401) {
+                    log('admin-output', 'Expected: Unauthorized (401) - authentication required', 'warning');
+                }
+            } catch (error) {
+                log('admin-output', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAdminDataWithToken() {
+            clearLog('admin-output');
+            const token = localStorage.getItem('debug_token');
+            
+            if (!token) {
+                log('admin-output', 'No token found. Please test PIN authentication first.', 'warning');
+                return;
+            }
+            
+            log('admin-output', 'Testing admin data endpoint with stored token...', 'info');
+            log('admin-output', `Using token: ${token.substring(0, 20)}...`, 'info');
+            
+            try {
+                const url = `${CONFIG.ADMIN_ENDPOINT}?token=${encodeURIComponent(token)}`;
+                log('admin-output', `Request URL: ${url}`, 'info');
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                log('admin-output', `Response status: ${response.status}`, response.ok ? 'success' : 'error');
+                log('admin-output', `Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`, 'info');
+                
+                const data = await response.json();
+                log('admin-output', `Response data: ${JSON.stringify(data, null, 2)}`, 'info');
+                
+                if (data.submissions) {
+                    log('admin-output', `Found ${data.submissions.length} submissions`, 'success');
+                } else if (Array.isArray(data)) {
+                    log('admin-output', `Found ${data.length} submissions (array format)`, 'success');
+                } else {
+                    log('admin-output', 'Unexpected data format', 'warning');
+                }
+            } catch (error) {
+                log('admin-output', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testNetwork() {
+            clearLog('network-output');
+            log('network-output', 'Testing basic network connectivity...', 'info');
+            
+            try {
+                // Test a simple endpoint
+                const response = await fetch('https://httpbin.org/get', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                log('network-output', `HTTPBin test - Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                // Test our API endpoint
+                const apiResponse = await fetch(CONFIG.ADMIN_ENDPOINT, {
+                    method: 'OPTIONS',
+                    mode: 'cors'
+                });
+                
+                log('network-output', `API Gateway OPTIONS - Status: ${apiResponse.status}`, apiResponse.ok ? 'success' : 'error');
+                log('network-output', `API Gateway headers: ${JSON.stringify(Object.fromEntries(apiResponse.headers.entries()))}`, 'info');
+                
+            } catch (error) {
+                log('network-output', `Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCORS() {
+            clearLog('network-output');
+            log('network-output', 'Testing CORS configuration...', 'info');
+            
+            try {
+                const response = await fetch(CONFIG.PIN_AUTH_ENDPOINT, {
+                    method: 'OPTIONS',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                log('network-output', `CORS preflight - Status: ${response.status}`, response.ok ? 'success' : 'error');
+                log('network-output', `CORS headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`, 'info');
+                
+                const allowOrigin = response.headers.get('Access-Control-Allow-Origin');
+                const allowMethods = response.headers.get('Access-Control-Allow-Methods');
+                const allowHeaders = response.headers.get('Access-Control-Allow-Headers');
+                
+                log('network-output', `Allow-Origin: ${allowOrigin}`, 'info');
+                log('network-output', `Allow-Methods: ${allowMethods}`, 'info');
+                log('network-output', `Allow-Headers: ${allowHeaders}`, 'info');
+                
+            } catch (error) {
+                log('network-output', `CORS error: ${error.message}`, 'error');
+            }
+        }
+
+        function checkStorage() {
+            clearLog('storage-output');
+            log('storage-output', 'Checking localStorage...', 'info');
+            
+            const adminAuth = localStorage.getItem('admin_authenticated');
+            const adminToken = localStorage.getItem('admin_token');
+            const debugToken = localStorage.getItem('debug_token');
+            
+            log('storage-output', `admin_authenticated: ${adminAuth}`, 'info');
+            log('storage-output', `admin_token: ${adminToken ? 'present' : 'missing'}`, adminToken ? 'success' : 'warning');
+            log('storage-output', `debug_token: ${debugToken ? 'present' : 'missing'}`, debugToken ? 'success' : 'warning');
+            
+            if (adminToken) {
+                log('storage-output', `admin_token length: ${adminToken.length}`, 'info');
+                log('storage-output', `admin_token preview: ${adminToken.substring(0, 20)}...`, 'info');
+            }
+            
+            if (debugToken) {
+                log('storage-output', `debug_token length: ${debugToken.length}`, 'info');
+                log('storage-output', `debug_token preview: ${debugToken.substring(0, 20)}...`, 'info');
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('admin_authenticated');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('debug_token');
+            log('storage-output', 'All tokens cleared from localStorage', 'success');
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            showConfig();
+            checkStorage();
+        });
+    </script>
+</body>
+</html>

@@ -1072,27 +1072,27 @@ input[type="url"].form-input {
     to { transform: rotate(360deg); }
 }
 
-/* Mobile-first: Ensure communication options stay on one line */
+/* Mobile layout for communication options: 2x2 grid */
 @media (max-width: 767px) {
     .communication-options {
-        grid-template-columns: repeat(4, 1fr);
-        gap: var(--spacing-xs);
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
     }
     
     .option-card {
-        padding: var(--spacing-sm);
-        min-height: 60px;
+        padding: var(--spacing-md);
+        min-height: 72px;
     }
     
     .option-icon {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         margin-bottom: var(--spacing-xs);
     }
     
     .option-text {
-        font-size: 0.7rem;
-        line-height: 1.1;
+        font-size: 0.8rem;
+        line-height: 1.2;
     }
 }
 
