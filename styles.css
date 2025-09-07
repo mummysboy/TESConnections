@@ -1513,7 +1513,7 @@ input:-webkit-autofill-selected:active {
 }
 
 /* Mobile responsiveness for day navigation */
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
     .day-navigation {
         padding: var(--spacing-md);
     }
