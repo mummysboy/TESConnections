@@ -1425,7 +1425,7 @@ input:-webkit-autofill-selected:active {
 
 .time-slots-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-xs);
 }
 
@@ -1510,6 +1510,13 @@ input:-webkit-autofill-selected:active {
     justify-content: center;
     line-height: 1;
     text-align: center;
+}
+
+/* Desktop: 3 columns for very large screens only */
+@media (min-width: 1400px) {
+    .time-slots-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 /* Mobile responsiveness for day navigation */
