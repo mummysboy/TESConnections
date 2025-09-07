@@ -1298,9 +1298,7 @@ input[type="url"].form-input {
     position: relative;
 }
 
-.time-slot.booked .time-slot-time,
-.time-slot.booked .time-hours,
-.time-slot.booked .time-minutes {
+.time-slot.booked .time-slot-time {
     opacity: 0;
 }
 
@@ -1336,42 +1334,13 @@ input[type="url"].form-input {
 }
 
 .time-slot-time {
-    font-weight: 500;
-    font-size: 0.85rem;
+    font-weight: 600;
+    font-size: 0.9rem;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     line-height: 1;
-}
-
-.time-hours {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.time-minutes {
-    font-weight: 400;
-    font-size: 0.75rem;
-    opacity: 0.8;
-    margin-top: 1px;
-}
-
-/* Desktop - show single line time format */
-@media (min-width: 768px) {
-    .time-slot-time {
-        flex-direction: row;
-        gap: 2px;
-    }
-    
-    .time-hours::after {
-        content: ':';
-        margin-left: 1px;
-    }
-    
-    .time-minutes {
-        margin-top: 0;
-    }
+    text-align: center;
 }
 
 /* Mobile responsiveness for day navigation */
@@ -1406,18 +1375,8 @@ input[type="url"].form-input {
     }
     
     .time-slot-time {
-        font-size: 0.8rem;
-    }
-    
-    .time-hours {
         font-size: 0.85rem;
-        font-weight: 700;
-    }
-    
-    .time-minutes {
-        font-size: 0.7rem;
-        opacity: 0.9;
-        margin-top: 2px;
+        font-weight: 600;
     }
 }
 
