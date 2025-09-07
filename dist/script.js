@@ -710,42 +710,8 @@ function openSelectedContactApp() {
     }
 }
 
-// Inject a small "Open" button inside the Contact details field and wire label/double-click
+// Make contact details clickable to open selected app
 document.addEventListener('DOMContentLoaded', () => {
-    const infoWrapper = infoField && infoField.parentElement;
-    if (infoWrapper) {
-        const openBtn = document.createElement('button');
-        openBtn.type = 'button';
-        openBtn.className = 'open-contact-btn';
-        openBtn.textContent = 'Open';
-        openBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openSelectedContactApp();
-        });
-        infoWrapper.appendChild(openBtn);
-
-        // Minimal styling for the button
-        const openBtnStyle = document.createElement('style');
-        openBtnStyle.textContent = `
-            .open-contact-btn {
-                position: absolute;
-                right: 10px;
-                top: 50%;
-                transform: translateY(-50%);
-                background: #1f2937;
-                color: #fff;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                padding: 6px 10px;
-                font-size: 12px;
-                cursor: pointer;
-            }
-            .open-contact-btn:hover { background: #374151; }
-            .input-wrapper { position: relative; }
-        `;
-        document.head.appendChild(openBtnStyle);
-    }
-
     const infoLabel = document.querySelector('label[for="info"]');
     if (infoLabel) {
         infoLabel.addEventListener('click', (e) => {
@@ -756,9 +722,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (infoField) {
-        infoField.addEventListener('dblclick', (e) => {
+        // Single press/click on the contact details opens the selected app
+        infoField.addEventListener('click', (e) => {
             e.preventDefault();
             openSelectedContactApp();
         });
+        // Support touch devices
+        infoField.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            openSelectedContactApp();
+        }, { passive: false });
     }
 });
