@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESConnections - Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.7/dist/amazon-cognito-identity.min.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo-section">
+                    <div class="logo-icon">⚡</div>
+                    <span class="logo-text">TESConnections</span>
+                </div>
+                <h2 class="login-title">Admin Dashboard</h2>
+                <p class="login-subtitle">Please sign in to access the admin panel</p>
+            </div>
+            
+        <div class="login-form">
+            <button id="pinLoginBtn" class="login-btn pin-login-btn">
+                <i class="fas fa-key"></i>
+                Sign In with PIN
+            </button>
+            <button id="cognitoLoginBtn" class="login-btn cognito-login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In with Cognito
+            </button>
+            <button id="testDashboardBtn" class="login-btn" style="background: #ff6b6b; margin-top: 10px;">
+                <i class="fas fa-bug"></i>
+                Test Dashboard (Debug)
+            </button>
+        </div>
+        
+        <!-- iPhone-style PIN Entry Modal -->
+        <div id="pinModal" class="pin-modal">
+            <div class="pin-modal-content">
+                <div class="pin-header">
+                    <h2>Enter Admin PIN</h2>
+                    <p>Enter your 4-digit PIN to access the admin dashboard</p>
+                </div>
+                
+                <div class="pin-display">
+                    <div class="pin-dots">
+                        <div class="pin-dot" id="dot1"></div>
+                        <div class="pin-dot" id="dot2"></div>
+                        <div class="pin-dot" id="dot3"></div>
+                        <div class="pin-dot" id="dot4"></div>
+                    </div>
+                </div>
+                
+                <div class="pin-keypad">
+                    <div class="pin-row">
+                        <button class="pin-key" data-number="1">1</button>
+                        <button class="pin-key" data-number="2">2</button>
+                        <button class="pin-key" data-number="3">3</button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key" data-number="4">4</button>
+                        <button class="pin-key" data-number="5">5</button>
+                        <button class="pin-key" data-number="6">6</button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key" data-number="7">7</button>
+                        <button class="pin-key" data-number="8">8</button>
+                        <button class="pin-key" data-number="9">9</button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key pin-key-empty"></button>
+                        <button class="pin-key" data-number="0">0</button>
+                        <button class="pin-key pin-key-backspace" id="backspaceBtn">
+                            <i class="fas fa-backspace"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="pin-actions">
+                    <button id="pinCancelBtn" class="pin-action-btn cancel-btn">Cancel</button>
+                    <button id="pinSubmitBtn" class="pin-action-btn submit-btn" disabled>Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard (hidden until authenticated) -->
+    <div id="adminDashboard" class="app-container" style="display: none;">
+        <!-- Navigation Header -->
+        <nav class="nav-header">
+            <div class="nav-content">
+                <div class="logo-section">
+                    <div class="logo-icon">⚡</div>
+                    <span class="logo-text">TESConnections</span>
+                </div>
+                <div class="header-menu">
+                    <div class="user-info">
+                        <span id="userEmail" class="user-email"></span>
+                        <button id="logoutBtn" class="logout-btn" title="Sign Out">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                    <button class="hamburger-menu" id="hamburgerMenu">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main App Content -->
+        <main class="app-main">
+            <!-- Admin Dashboard Header -->
+            <div class="admin-header">
+                <h1 class="admin-title">Admin Dashboard</h1>
+                <p class="admin-subtitle">Manage meetings and connections</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalMeetings">-</div>
+                        <div class="stat-label">Total Meetings</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="todayMeetings">-</div>
+                        <div class="stat-label">Today's Meetings</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalConnections">-</div>
+                        <div class="stat-label">Total Connections</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Meetings Section -->
+            <div class="data-container" id="meetingsContainer">
+                <div class="table-header">
+                    <h3 class="table-title">
+                        <i class="fas fa-calendar-check"></i>
+                        Scheduled Meetings
+                        <span class="count-badge" id="meetingsCount">0</span>
+                    </h3>
+                    <div class="table-actions">
+                        <button class="action-btn refresh-btn" id="refreshMeetings">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                        <button class="action-btn export-btn" id="exportMeetings">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table" id="meetingsTable">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Name</th>
+                                <th>Meeting Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meetingsTableBody">
+                            <!-- Meetings will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="empty-state" id="meetingsEmptyState" style="display: none;">
+                    <div class="empty-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <h3>No Meetings Scheduled</h3>
+                    <p>No meetings found matching your filters.</p>
+                </div>
+            </div>
+
+            <!-- Connections Section -->
+            <div class="data-container" id="connectionsContainer">
+                <div class="table-header">
+                    <h3 class="table-title">
+                        <i class="fas fa-handshake"></i>
+                        General Connections
+                        <span class="count-badge" id="connectionsCount">0</span>
+                    </h3>
+                    <div class="table-actions">
+                        <button class="action-btn refresh-btn" id="refreshConnections">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                        <button class="action-btn export-btn" id="exportConnections">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table" id="connectionsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact Info</th>
+                                <th>Meeting Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="connectionsTableBody">
+                            <!-- Connections will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="empty-state" id="connectionsEmptyState" style="display: none;">
+                    <div class="empty-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>No Connections Found</h3>
+                    <p>No connections found matching your filters.</p>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState">
+                <div class="loading-spinner"></div>
+                <p>Loading data...</p>
+            </div>
+        </main>
+
+        <!-- About Us Modal -->
+        <div class="modal-overlay" id="aboutModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">About Us</h3>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="about-section">
+                        <h4 class="about-title">Company: Tris</h4>
+                        <p class="about-description">
+                            Tris is a leading technology solutions company specializing in innovative business connections and strategic partnerships. We focus on creating meaningful relationships between industry leaders and emerging opportunities, driving growth and success across various sectors.
+                        </p>
+                    </div>
+                    <div class="about-section">
+                        <h4 class="about-title">Account Manager: Isaac Hirsch</h4>
+                        <p class="about-description">
+                            Isaac Hirsch is a seasoned account manager with extensive experience in business development and client relations. With a proven track record of successful partnerships and a deep understanding of market dynamics, Isaac ensures every connection leads to mutual success and long-term value creation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="footer-logo">⚡</span>
+                    <span class="footer-text">TESConnections</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

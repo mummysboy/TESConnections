@@ -13,9 +13,5 @@
 /admin.html /admin.html 200
 /meetings.html /meetings.html 200
 
-<<<<<<< Current (Your changes)
-# Fallback for SPA routing (if needed)
-=======
 # Fallback for SPA routing - this should be last
->>>>>>> Incoming (Background Agent changes)
 /* /index.html 200

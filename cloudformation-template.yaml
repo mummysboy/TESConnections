@@ -523,6 +523,9 @@ Resources:
             QueryString: false
             Cookies:
               Forward: none
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt CloudFrontPrettyUrlFunction.FunctionMetadata.FunctionARN
         CustomErrorResponses:
           - ErrorCode: 404
             ResponseCode: 200
@@ -545,6 +548,9 @@ Resources:
               DefaultTTL: 0
               MaxTTL: 0
               MinTTL: 0
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt CloudFrontPrettyUrlFunction.FunctionMetadata.FunctionARN
           - PathPattern: "/meetings*"
             TargetOriginId: S3Origin
             ViewerProtocolPolicy: redirect-to-https
@@ -559,6 +565,9 @@ Resources:
               DefaultTTL: 0
               MaxTTL: 0
               MinTTL: 0
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt CloudFrontPrettyUrlFunction.FunctionMetadata.FunctionARN
         PriceClass: PriceClass_100
         Comment: !Sub 'TESConnections Website Distribution - ${Environment}'
 
@@ -568,6 +577,33 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Sub 'TESConnections OAI - ${Environment}'
+
+  # CloudFront Function to rewrite pretty URLs to .html files
+  CloudFrontPrettyUrlFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub 'tes-connections-pretty-url-${Environment}'
+      AutoPublish: true
+      FunctionConfig:
+        Comment: !Sub 'Rewrite /meetings and /admin to .html - ${Environment}'
+        Runtime: cloudfront-js-1.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+
+          if (uri === '/meetings' || uri === '/meetings/') {
+            request.uri = '/meetings.html';
+            return request;
+          }
+
+          if (uri === '/admin' || uri === '/admin/') {
+            request.uri = '/admin.html';
+            return request;
+          }
+
+          return request;
+        }
 
   # S3 Bucket for Static Website
   WebsiteBucket:

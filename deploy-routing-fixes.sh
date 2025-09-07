@@ -27,7 +27,8 @@ if [ -z "$1" ]; then
 fi
 
 STACK_NAME=$1
-REGION="us-west-1"
+# Use AWS_REGION env var if set, else default to us-east-1 to match main deploy
+REGION="${AWS_REGION:-us-east-1}"
 
 echo -e "${YELLOW}📋 Stack Name: $STACK_NAME${NC}"
 echo -e "${YELLOW}📋 Region: $REGION${NC}"

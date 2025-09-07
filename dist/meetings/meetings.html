@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESConnections - Book a Meeting</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation Header -->
+        <nav class="nav-header">
+            <div class="nav-content">
+                <div class="logo-section">
+                    <div class="logo-icon">⚡</div>
+                    <span class="logo-text">TESConnections</span>
+                </div>
+                <div class="header-menu">
+                    <button class="hamburger-menu" id="hamburgerMenu">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main App Content -->
+        <main class="app-main">
+            <!-- TES Conference Banner -->
+            <div class="conference-banner">
+                <img src="tes-affiliate-conferences-2025-568x379.jpg" alt="TES 2025 PRG - Prague, Czech Republic" class="banner-image">
+            </div>
+
+            <!-- Connection Form Card -->
+            <div class="form-card">
+                <div class="form-header">
+                    <h2 class="form-title">Book a Meeting</h2>
+                </div>
+
+                <form class="connection-form" id="contactForm">
+                    <!-- Name Field -->
+                    <div class="input-group">
+                        <label for="name" class="input-label">
+                            <span class="label-text">What's your name?</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                class="form-input" 
+                                placeholder="Your name"
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                required
+                            >
+                            <div class="input-border"></div>
+                        </div>
+                        <span class="error-message" id="nameError"></span>
+                    </div>
+
+                    <!-- Communication Method -->
+                    <div class="input-group">
+                        <label for="communication" class="input-label">
+                            <span class="label-text">How should we reach you?</span>
+                        </label>
+                        <div class="communication-options">
+                            <div class="option-card" data-value="telegram">
+                                <div class="option-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                                    </svg>
+                                </div>
+                                <span class="option-text">Telegram</span>
+                                <div class="option-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <div class="option-card" data-value="email">
+                                <div class="option-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                    </svg>
+                                </div>
+                                <span class="option-text">Email</span>
+                                <div class="option-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <div class="option-card" data-value="teams">
+                                <div class="option-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20.25 2H3.75A1.75 1.75 0 0 0 2 3.75v16.5c0 .966.784 1.75 1.75 1.75h16.5A1.75 1.75 0 0 0 22 20.25V3.75A1.75 1.75 0 0 0 20.25 2zM7.5 18.75c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm0-3c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm0-3c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm0-3c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm9 9c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm0-3c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm0-3c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm0-3c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75z"/>
+                                    </svg>
+                                </div>
+                                <span class="option-text">Teams</span>
+                                <div class="option-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <div class="option-card" data-value="whatsapp">
+                                <div class="option-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                                    </svg>
+                                </div>
+                                <span class="option-text">WhatsApp</span>
+                                <div class="option-check">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="communication" name="communication" required>
+                        <span class="error-message" id="communicationError"></span>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="input-group">
+                        <label for="info" class="input-label">
+                            <span class="label-text">Contact details</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="info" 
+                                name="info" 
+                                class="form-input"
+                                placeholder="Contact details..."
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                            >
+                            <div class="input-border"></div>
+                        </div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="input-group">
+                        <label for="comments" class="input-label">
+                            <span class="label-text">Comments</span>
+                        </label>
+                        <div class="textarea-wrapper">
+                            <textarea 
+                                id="comments" 
+                                name="comments" 
+                                class="form-textarea" 
+                                placeholder="Comments..."
+                                rows="4"
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                            ></textarea>
+                            <div class="textarea-border"></div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Section -->
+                    <div class="input-group">
+                        <label class="input-label">
+                            <span class="label-text">Select Meeting Time</span>
+                        </label>
+                        <div class="calendar-container">
+                            <div class="calendar-header">
+                                <span class="calendar-title">September 12-15, 2025</span>
+                            </div>
+                            <div class="day-navigation">
+                                <button class="nav-arrow nav-arrow-left" id="prevDay">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <div class="selected-day" id="selectedDay">
+                                    <!-- Selected day will be displayed here -->
+                                </div>
+                                <button class="nav-arrow nav-arrow-right" id="nextDay">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedTimeSlot" name="selectedTimeSlot" required>
+                        <span class="error-message" id="timeSlotError"></span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="btn-text">Book Meeting</span>
+                        <div class="btn-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="btn-shine"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Success Card -->
+            <div class="success-card" id="successMessage" style="display: none;">
+                <div class="success-content">
+                    <div class="success-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="success-title">Meeting Booked Successfully</h3>
+                    <p class="success-subtitle">We'll see you soon!</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- About Us Modal -->
+        <div class="modal-overlay" id="aboutModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">About Us</h3>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="about-section">
+                        <h4 class="about-title">Company: Tris</h4>
+                        <p class="about-description">
+                            Tris is a leading technology solutions company specializing in innovative business connections and strategic partnerships. We focus on creating meaningful relationships between industry leaders and emerging opportunities, driving growth and success across various sectors.
+                        </p>
+                    </div>
+                    <div class="about-section">
+                        <h4 class="about-title">Account Manager: Isaac Hirsch</h4>
+                        <p class="about-description">
+                            Isaac Hirsch is a seasoned account manager with extensive experience in business development and client relations. With a proven track record of successful partnerships and a deep understanding of market dynamics, Isaac ensures every connection leads to mutual success and long-term value creation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="footer-logo">⚡</span>
+                    <span class="footer-text">TESConnections</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="meetings.js"></script>
+</body>
+</html>
