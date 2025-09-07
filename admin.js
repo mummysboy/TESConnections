@@ -881,7 +881,18 @@ function renderMeetingsTable() {
         
         if (isMobile) {
             // Mobile layout - show only essential info
-            const actualTimeSlot = item.timeSlot || 'Not scheduled';
+            let actualTimeSlot = 'Not scheduled';
+            if (item.timeSlot && item.timeSlot.trim()) {
+                // Extract just the time part from format "YYYY-MM-DD-HH:MM"
+                if (item.timeSlot.includes('-') && item.timeSlot.includes(':')) {
+                    const parts = item.timeSlot.split('-');
+                    if (parts.length >= 4) {
+                        actualTimeSlot = parts[3]; // Get the time part (HH:MM)
+                    }
+                } else {
+                    actualTimeSlot = item.timeSlot;
+                }
+            }
             return `
             <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
                 <td class="mobile-hide"></td>

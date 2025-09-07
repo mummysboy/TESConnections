@@ -2372,18 +2372,19 @@ input:-webkit-autofill-selected:active {
     }
     
     .mobile-meeting-time {
-        font-size: 0.8rem;
+        font-size: 0.9rem;
         color: var(--electric-blue);
-        font-weight: 500;
+        font-weight: 600;
         margin-top: var(--spacing-xs);
-        padding: var(--spacing-xs) var(--spacing-sm);
-        background: rgba(59, 130, 246, 0.1);
-        border-radius: var(--radius-sm);
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: rgba(59, 130, 246, 0.15);
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(59, 130, 246, 0.3);
         display: inline-block;
-        font-family: 'Courier New', monospace;
-        letter-spacing: 0.5px;
-        word-break: break-all;
+        font-family: var(--font-primary);
+        letter-spacing: 1px;
+        text-align: center;
+        min-width: 60px;
     }
     
     .mobile-connection-info {
