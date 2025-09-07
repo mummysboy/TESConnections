@@ -7,7 +7,7 @@
     "start": "python -m http.server 8000",
     "deploy": "aws s3 sync . s3://tes-connections-website-prod-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
     "deploy-dev": "aws s3 sync . s3://tes-connections-website-dev-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
-    "build": "mkdir -p dist && cp index.html styles.css script.js meetings.html meetings.js admin.html admin.js _redirects favicon.ico tes-affiliate-conferences-2025-568x379.jpg dist/ && mkdir -p dist/meetings dist/admin && cp meetings.html dist/meetings/index.html && cp admin.html dist/admin/index.html && cp meetings.html dist/meetings && cp admin.html dist/admin"
+    "build": "mkdir -p dist && cp index.html styles.css script.js meetings.html meetings.js admin.html admin.js admin-sample.json _redirects favicon.ico tes-affiliate-conferences-2025-568x379.jpg dist/ && mkdir -p dist/meetings dist/admin && cp meetings.html dist/meetings/index.html && cp admin.html dist/admin/index.html && cp meetings.html dist/meetings && cp admin.html dist/admin"
   },
   "keywords": [
     "landing-page",

@@ -7,6 +7,15 @@ Parameters:
     Default: 'dev'
     AllowedValues: ['dev', 'staging', 'prod']
     Description: 'Environment name'
+  AdminPin:
+    Type: String
+    Default: '1234'
+    Description: 'Admin PIN for PIN-based auth (override in secure envs)'
+  PinSessionSecret:
+    Type: String
+    NoEcho: true
+    Default: 'replace-with-strong-secret'
+    Description: 'Secret used to sign PIN session tokens'
 
 Resources:
   # Cognito User Pool for Admin Authentication
@@ -314,6 +323,8 @@ Resources:
           DYNAMODB_TABLE: !Ref ConnectionsTable
           COGNITO_USER_POOL_ID: !Ref AdminUserPool
           AWS_REGION: !Ref AWS::Region
+          ADMIN_PIN: !Ref AdminPin
+          PIN_SESSION_SECRET: !Ref PinSessionSecret
       Timeout: 30
       MemorySize: 256
 
@@ -345,6 +356,22 @@ Resources:
       RestApiId: !Ref ApiGateway
       ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: submit-contact
+
+  # API Gateway Resource for PIN authentication
+  PinAuthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: pin-auth
+
+  # API Gateway Resource for availability (public GET)
+  AvailabilityResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: availability
 
   # Admin Data Resource
   AdminDataResource:
@@ -387,6 +414,82 @@ Resources:
     Properties:
       RestApiId: !Ref ApiGateway
       ResourceId: !Ref ApiResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # POST Method for PIN auth (public)
+  PinAuthPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref PinAuthResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # OPTIONS for PIN auth (CORS)
+  PinAuthOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref PinAuthResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # GET Method for availability (public)
+  AvailabilityGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref AvailabilityResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FormSubmissionLambda.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # OPTIONS for availability (CORS)
+  AvailabilityOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref AvailabilityResource
       HttpMethod: OPTIONS
       AuthorizationType: NONE
       Integration:
@@ -497,6 +600,10 @@ Resources:
       - AdminDataOptionsMethod
       - DeleteSubmissionMethod
       - DeleteSubmissionOptionsMethod
+      - PinAuthPostMethod
+      - PinAuthOptionsMethod
+      - AvailabilityGetMethod
+      - AvailabilityOptionsMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment

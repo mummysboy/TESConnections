@@ -64,22 +64,27 @@ function initializeDOMElements() {
     exportConnections = document.getElementById('exportConnections');
 }
 
-// Detect local development environment
-const IS_LOCAL = (typeof window !== 'undefined') && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+// Detect local development environment (kept for diagnostics only)
+const IS_LOCAL = (typeof window !== 'undefined') && (
+    location.protocol === 'file:' ||
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1' ||
+    location.hostname === '0.0.0.0'
+);
 
 // Initialize admin dashboard
 document.addEventListener('DOMContentLoaded', () => {
     initializeDOMElements();
-    // In local dev, bypass login to make the admin page usable
-    if (IS_LOCAL) {
-        isAuthenticated = true;
-        authToken = 'dev-local';
-        showAdminDashboard();
-    } else {
-        checkAuthentication();
-    }
+    checkAuthentication();
     setupEventListeners();
     setupModal();
+    // Optional: auto-open PIN modal via ?pin=1 or #pin
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('pin') === '1' || window.location.hash === '#pin') {
+            showPinModal();
+        }
+    } catch (_) {}
 });
 
 // Check if user is already authenticated
@@ -102,19 +107,19 @@ function checkAuthentication() {
 
 // Show login screen
 function showLoginScreen() {
-    document.getElementById('loginScreen').style.display = 'block';
-    document.getElementById('adminDashboard').style.display = 'none';
+    const login = document.getElementById('loginScreen');
+    const dashboard = document.getElementById('adminDashboard');
+    if (login) login.style.display = 'block';
+    if (dashboard) dashboard.style.display = 'none';
     isAuthenticated = false;
     authToken = null;
 }
 
 // Show admin dashboard
 function showAdminDashboard() {
-    
     const loginScreen = document.getElementById('loginScreen');
     const adminDashboard = document.getElementById('adminDashboard');
-    
-    
+
     // Ensure PIN modal is completely hidden first
     const pinModal = document.getElementById('pinModal');
     if (pinModal) {
@@ -122,14 +127,8 @@ function showAdminDashboard() {
         pinModal.style.display = 'none';
     }
     
-    if (loginScreen) {
-        loginScreen.style.display = 'none';
-    } else {
-    }
-    
-    if (adminDashboard) {
-        adminDashboard.style.display = 'block';
-    }
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (adminDashboard) adminDashboard.style.display = 'block';
     
     loadData();
 }
@@ -470,6 +469,17 @@ async function loadData() {
 // Fetch data from API
 async function fetchAdminData() {
     try {
+        // In local development, load mock data
+        if (IS_LOCAL) {
+            try {
+                const resp = await fetch('admin-sample.json', { cache: 'no-store' });
+                if (resp.ok) {
+                    const mock = await resp.json();
+                    return Array.isArray(mock) ? mock : (mock.submissions || []);
+                }
+            } catch (_) {}
+            return [];
+        }
         const headers = {
             'Content-Type': 'application/json',
         };
@@ -479,13 +489,15 @@ async function fetchAdminData() {
             headers['Authorization'] = `Bearer ${authToken}`;
         } else {
         }
-        
-        
         const response = await fetch(CONFIG.ADMIN_ENDPOINT, {
             method: 'GET',
             headers: headers
         });
         
+        // Gracefully handle unauthorized in hosted env
+        if (response.status === 401) {
+            return [];
+        }
         
         if (!response.ok) {
             throw new Error(`Failed to fetch data: ${response.status}`);
@@ -505,7 +517,9 @@ async function fetchAdminData() {
         }
         
     } catch (error) {
-        showError('Failed to load data from database. Please check your connection and try again.');
+        if (!IS_LOCAL) {
+            showError('Failed to load data from database. Please check your connection and try again.');
+        }
         return [];
     }
 }
