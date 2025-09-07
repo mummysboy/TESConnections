@@ -5,12 +5,19 @@ on:
     branches: [ main, restore-26cba73 ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Debug Info
+      run: |
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Event: ${{ github.event_name }}"
+        echo "Commit: ${{ github.sha }}"
+        
     - name: Checkout code
       uses: actions/checkout@v4
       
