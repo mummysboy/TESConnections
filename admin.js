@@ -893,11 +893,6 @@ function renderMeetingsTable() {
                     actualTimeSlot = item.timeSlot;
                 }
             }
-            console.log('Mobile time slot debug:', {
-                original: item.timeSlot,
-                extracted: actualTimeSlot,
-                cleanItemMeetingTime: cleanItem.meetingTime
-            });
             return `
             <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
                 <td class="mobile-hide"></td>
