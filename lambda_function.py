@@ -775,3 +775,4 @@ async def send_notification(item):
             
     except Exception as e:
         # Don't fail the main function if notification fails
+        pass
