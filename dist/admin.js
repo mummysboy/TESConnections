@@ -109,8 +109,10 @@ function showLoginScreen() {
 
 // Show admin dashboard
 function showAdminDashboard() {
+    console.log('Showing admin dashboard...');
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminDashboard').style.display = 'block';
+    console.log('Admin dashboard elements updated, loading data...');
     loadData();
 }
 
@@ -419,10 +421,12 @@ function setupEventListeners() {
 
 // Load data from API
 async function loadData() {
+    console.log('Loading admin data...', { isAuthenticated, authToken: authToken ? 'present' : 'missing' });
     showLoading(true);
     
     try {
         const data = await fetchAdminData();
+        console.log('Admin data loaded:', data);
         
         if (data.length === 0) {
             showError('No data found in database.');
