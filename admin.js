@@ -89,20 +89,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Check if user is already authenticated
 function checkAuthentication() {
+    console.log('Checking authentication...');
+    
     // Check if user is already authenticated via PIN
     const storedAuth = localStorage.getItem('admin_authenticated');
     const storedToken = localStorage.getItem('admin_token');
     
+    console.log('Stored auth:', storedAuth, 'Stored token:', storedToken ? 'present' : 'missing');
+    
     if (storedAuth === 'true' && storedToken) {
-        isAuthenticated = true;
-        authToken = storedToken;
-        showAdminDashboard();
+        // Validate token format (basic check)
+        try {
+            // Basic JWT token validation - check if it has the right structure
+            const tokenParts = storedToken.split('.');
+            if (tokenParts.length === 3) {
+                isAuthenticated = true;
+                authToken = storedToken;
+                console.log('Authentication valid, showing dashboard');
+                showAdminDashboard();
+            } else {
+                console.log('Invalid token format, clearing authentication');
+                clearAuthentication();
+                showLoginScreen();
+            }
+        } catch (error) {
+            console.log('Token validation failed:', error);
+            clearAuthentication();
+            showLoginScreen();
+        }
     } else {
-        // Clear any invalid stored data
-        localStorage.removeItem('admin_authenticated');
-        localStorage.removeItem('admin_token');
+        console.log('No valid authentication found, showing login screen');
+        clearAuthentication();
         showLoginScreen();
     }
+}
+
+// Clear authentication data
+function clearAuthentication() {
+    localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_token');
+    isAuthenticated = false;
+    authToken = null;
 }
 
 // Show login screen
@@ -276,6 +303,7 @@ function removePinDigit() {
 async function submitPin() {
     if (pinEntry.length !== 4) return;
     
+    console.log('Submitting PIN for authentication...');
     
     try {
         showPinLoading(true);
@@ -290,13 +318,17 @@ async function submitPin() {
             mode: 'cors' // Explicitly set CORS mode
         });
         
+        console.log('PIN auth response status:', response.status);
         
         const data = await response.json();
+        console.log('PIN auth response data:', data);
         
         if (response.ok && data.success) {
             // Store the session token
             authToken = data.sessionToken;
             isAuthenticated = true;
+            
+            console.log('PIN authentication successful, storing token');
             
             // Store authentication state in localStorage
             localStorage.setItem('admin_authenticated', 'true');
@@ -315,10 +347,12 @@ async function submitPin() {
                 updateUserInfo(user);
             }, 100);
         } else {
+            console.error('PIN authentication failed:', data.message);
             showPinError(data.message || 'Invalid PIN. Please try again.');
         }
     } catch (error) {
-        showPinError('Authentication failed. Please try again.');
+        console.error('PIN authentication error:', error);
+        showPinError(`Authentication failed: ${error.message}`);
     } finally {
         showPinLoading(false);
     }
@@ -374,12 +408,132 @@ function handleLogout() {
     showLoginScreen();
 }
 
+// Show debug information
+function showDebugInfo() {
+    const debugInfo = {
+        isLocal: IS_LOCAL,
+        isAuthenticated: isAuthenticated,
+        hasToken: !!authToken,
+        tokenType: authToken === 'test-token' ? 'test' : 'real',
+        apiEndpoint: CONFIG.ADMIN_ENDPOINT,
+        pinAuthEndpoint: CONFIG.PIN_AUTH_ENDPOINT,
+        localStorage: {
+            admin_authenticated: localStorage.getItem('admin_authenticated'),
+            admin_token: localStorage.getItem('admin_token') ? 'present' : 'missing'
+        },
+        dataCounts: {
+            allData: allData.length,
+            meetings: meetingsData.length,
+            connections: connectionsData.length
+        },
+        userAgent: navigator.userAgent,
+        location: window.location.href
+    };
+    
+    const debugText = JSON.stringify(debugInfo, null, 2);
+    
+    // Create debug modal
+    const modalContent = `
+        <div class="debug-modal-header">
+            <h3 class="debug-modal-title">
+                <i class="fas fa-bug"></i>
+                Debug Information
+            </h3>
+            <button class="debug-modal-close" onclick="closeDebugModal()">&times;</button>
+        </div>
+        <div class="debug-modal-body">
+            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">${debugText}</pre>
+            <div style="margin-top: 15px;">
+                <button onclick="copyDebugInfo()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-copy"></i> Copy Debug Info
+                </button>
+                <button onclick="testApiConnection()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                    <i class="fas fa-network-wired"></i> Test API Connection
+                </button>
+            </div>
+        </div>
+    `;
+    
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'debug-modal-overlay';
+    modalOverlay.innerHTML = `
+        <div class="debug-modal-content">
+            ${modalContent}
+        </div>
+    `;
+    
+    document.body.appendChild(modalOverlay);
+    
+    // Store debug info globally for copying
+    window.debugInfo = debugText;
+    
+    // Show modal with animation
+    setTimeout(() => {
+        modalOverlay.classList.add('active');
+    }, 10);
+    
+    // Close on outside click
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            closeDebugModal();
+        }
+    });
+}
+
+// Close debug modal
+function closeDebugModal() {
+    const modalOverlay = document.querySelector('.debug-modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+        setTimeout(() => {
+            modalOverlay.remove();
+        }, 300);
+    }
+}
+
+// Copy debug info to clipboard
+function copyDebugInfo() {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.debugInfo).then(() => {
+            showSuccess('Debug info copied to clipboard');
+        }).catch(() => {
+            showError('Failed to copy debug info');
+        });
+    } else {
+        showError('Clipboard API not available');
+    }
+}
+
+// Test API connection
+async function testApiConnection() {
+    try {
+        const response = await fetch(CONFIG.ADMIN_ENDPOINT, {
+            method: 'GET',
+            mode: 'cors'
+        });
+        
+        const result = {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            url: response.url
+        };
+        
+        console.log('API connection test result:', result);
+        showSuccess(`API test completed. Status: ${response.status}`);
+    } catch (error) {
+        console.error('API connection test failed:', error);
+        showError(`API test failed: ${error.message}`);
+    }
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Authentication events
     const pinLoginBtn = document.getElementById('pinLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const testDashboardBtn = document.getElementById('testDashboardBtn');
+    const debugInfoBtn = document.getElementById('debugInfoBtn');
     
     if (pinLoginBtn) {
         pinLoginBtn.addEventListener('click', handlePinLogin);
@@ -391,10 +545,15 @@ function setupEventListeners() {
     
     if (testDashboardBtn) {
         testDashboardBtn.addEventListener('click', () => {
+            console.log('Test dashboard button clicked');
             isAuthenticated = true;
             authToken = 'test-token';
             showAdminDashboard();
         });
+    }
+    
+    if (debugInfoBtn) {
+        debugInfoBtn.addEventListener('click', showDebugInfo);
     }
     
     // Meetings section
@@ -419,22 +578,27 @@ function setupEventListeners() {
 
 // Load data from API
 async function loadData() {
+    console.log('Loading admin data...');
     showLoading(true);
     
     try {
         const data = await fetchAdminData();
+        console.log('Fetched data:', data);
         
         if (data.length === 0) {
+            console.log('No data found in database');
             showError('No data found in database.');
             meetingsData = [];
             connectionsData = [];
         } else {
             allData = data;
+            console.log('Total data items:', allData.length);
             
             // Separate meetings and connections
             meetingsData = allData.filter(item => item.type === 'meeting');
             connectionsData = allData.filter(item => item.type === 'connection');
             
+            console.log('Meetings:', meetingsData.length, 'Connections:', connectionsData.length);
             
             // Sort meetings by actual meeting time (soonest to latest)
             meetingsData.sort((a, b) => {
@@ -460,7 +624,8 @@ async function loadData() {
         renderTables();
         
     } catch (error) {
-        showError('Failed to load data. Please try again.');
+        console.error('Error in loadData:', error);
+        showError(`Failed to load data: ${error.message}`);
     } finally {
         showLoading(false);
     }
@@ -475,31 +640,73 @@ async function fetchAdminData() {
                 const resp = await fetch('admin-sample.json', { cache: 'no-store' });
                 if (resp.ok) {
                     const mock = await resp.json();
+                    console.log('Loaded mock data:', mock);
                     return Array.isArray(mock) ? mock : (mock.submissions || []);
                 }
-            } catch (_) {}
+            } catch (error) {
+                console.error('Failed to load mock data:', error);
+            }
             return [];
         }
+        
+        // Check authentication before making API call
+        if (!isAuthenticated || !authToken) {
+            console.error('Not authenticated - cannot fetch admin data');
+            showError('Authentication required. Please log in again.');
+            return [];
+        }
+        
+        // Handle test token - load mock data
+        if (authToken === 'test-token') {
+            console.log('Using test token, loading mock data');
+            try {
+                const resp = await fetch('admin-sample.json', { cache: 'no-store' });
+                if (resp.ok) {
+                    const mock = await resp.json();
+                    console.log('Loaded mock data for test:', mock);
+                    return Array.isArray(mock) ? mock : (mock.submissions || []);
+                }
+            } catch (error) {
+                console.error('Failed to load mock data for test:', error);
+            }
+            return [];
+        }
+        
         // Avoid sending Content-Type on GET; pass token via query to prevent preflight
         let url = CONFIG.ADMIN_ENDPOINT;
-        if (isAuthenticated && authToken) {
-            const sep = url.includes('?') ? '&' : '?';
-            url = `${url}${sep}token=${encodeURIComponent(authToken)}`;
-        }
+        const sep = url.includes('?') ? '&' : '?';
+        url = `${url}${sep}token=${encodeURIComponent(authToken)}`;
+        
+        console.log('Fetching admin data from:', url);
+        
         const response = await fetch(url, {
-            method: 'GET'
+            method: 'GET',
+            mode: 'cors'
         });
         
-        // Gracefully handle unauthorized in hosted env
+        console.log('Admin data response status:', response.status);
+        
+        // Handle authentication errors
         if (response.status === 401) {
+            console.error('Authentication failed - token may be expired');
+            showError('Authentication expired. Please log in again.');
+            // Clear invalid authentication
+            localStorage.removeItem('admin_authenticated');
+            localStorage.removeItem('admin_token');
+            isAuthenticated = false;
+            authToken = null;
+            showLoginScreen();
             return [];
         }
         
         if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.status}`);
+            const errorText = await response.text();
+            console.error('API error:', response.status, errorText);
+            throw new Error(`Failed to fetch data: ${response.status} - ${errorText}`);
         }
         
         const data = await response.json();
+        console.log('Received admin data:', data);
         
         // Handle different response formats
         if (Array.isArray(data)) {
@@ -509,12 +716,14 @@ async function fetchAdminData() {
         } else if (data.data) {
             return data.data;
         } else {
+            console.warn('Unexpected data format:', data);
             return [];
         }
         
     } catch (error) {
+        console.error('Error fetching admin data:', error);
         if (!IS_LOCAL) {
-            showError('Failed to load data from database. Please check your connection and try again.');
+            showError(`Failed to load data: ${error.message}`);
         }
         return [];
     }
@@ -1380,6 +1589,59 @@ style.textContent = `
     .detail-section p {
         margin-bottom: var(--spacing-xs);
         line-height: 1.5;
+    }
+    
+    .debug-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .debug-modal-overlay.active {
+        opacity: 1;
+    }
+    
+    .debug-modal-content {
+        background: white;
+        border-radius: 8px;
+        max-width: 80%;
+        max-height: 80%;
+        overflow: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .debug-modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .debug-modal-title {
+        margin: 0;
+        color: var(--electric-blue);
+    }
+    
+    .debug-modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+    
+    .debug-modal-body {
+        padding: 20px;
     }
 `;
 document.head.appendChild(style);
