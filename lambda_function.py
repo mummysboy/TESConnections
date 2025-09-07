@@ -745,34 +745,13 @@ def lambda_handler(event, context):
             })
         }
 
-# Optional: Function to send notifications
+# Optional: Function to send notifications (DISABLED)
 async def send_notification(item):
     """
     Send notification about new form submission
     This is optional and can be configured based on your needs
+    DISABLED: Notifications are currently turned off
     """
-    try:
-        # Example: Send SNS notification
-        sns = boto3.client('sns')
-        topic_arn = os.environ.get('SNS_TOPIC_ARN')
-        
-        if topic_arn:
-            message = f"""
-            New TESConnections Form Submission:
-            
-            Name: {item['name']}
-            Communication: {item['communication']}
-            Info: {item['info']}
-            Comments: {item['comments']}
-            Submitted: {item['createdAt']}
-            """
-            
-            sns.publish(
-                TopicArn=topic_arn,
-                Message=message,
-                Subject='New TESConnections Form Submission'
-            )
-            
-    except Exception as e:
-        # Don't fail the main function if notification fails
-        pass
+    # Notifications are disabled - no emails will be sent
+    print("Notification function called but disabled - no email sent")
+    pass
