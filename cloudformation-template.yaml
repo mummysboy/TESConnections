@@ -530,6 +530,35 @@ Resources:
           - ErrorCode: 403
             ResponseCode: 200
             ResponsePagePath: /index.html
+        CacheBehaviors:
+          - PathPattern: "/admin*"
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD, OPTIONS]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            TTL:
+              DefaultTTL: 0
+              MaxTTL: 0
+              MinTTL: 0
+          - PathPattern: "/meetings*"
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD, OPTIONS]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            TTL:
+              DefaultTTL: 0
+              MaxTTL: 0
+              MinTTL: 0
         PriceClass: PriceClass_100
         Comment: !Sub 'TESConnections Website Distribution - ${Environment}'
 
@@ -554,6 +583,14 @@ Resources:
         IndexDocument: index.html
         ErrorDocument: index.html
         RoutingRules:
+          - RedirectRule:
+              ReplaceKeyWith: admin.html
+            RoutingRuleCondition:
+              KeyPrefixEquals: admin
+          - RedirectRule:
+              ReplaceKeyWith: meetings.html
+            RoutingRuleCondition:
+              KeyPrefixEquals: meetings
           - RedirectRule:
               ReplaceKeyWith: index.html
             RoutingRuleCondition:

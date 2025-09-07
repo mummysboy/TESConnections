@@ -1,15 +1,17 @@
 # Redirect rules for TESConnections
 # Ensure HTML files are served correctly
 
-# Admin dashboard
+# Admin dashboard - exact matches first
 /admin /admin.html 200
 /admin/ /admin.html 200
-/admin.html /admin.html 200
 
-# Meetings page  
+# Meetings page - exact matches first  
 /meetings /meetings.html 200
 /meetings/ /meetings.html 200
+
+# Direct file access (for debugging)
+/admin.html /admin.html 200
 /meetings.html /meetings.html 200
 
-# Fallback for SPA routing (if needed)
+# Fallback for SPA routing - this should be last
 /* /index.html 200
