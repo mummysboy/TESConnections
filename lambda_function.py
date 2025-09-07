@@ -481,12 +481,25 @@ def lambda_handler(event, context):
     # Handle delete requests
     if event['httpMethod'] == 'DELETE' and '/delete-submission' in event.get('path', ''):
         try:
-            if isinstance(event['body'], str):
-                body = json.loads(event['body'])
-            else:
-                body = event['body']
-            
-            submission_id = body.get('id')
+            # Safely parse body if present
+            body = None
+            if 'body' in event and event['body'] is not None:
+                if isinstance(event['body'], str) and event['body'] != '':
+                    try:
+                        body = json.loads(event['body'])
+                    except Exception:
+                        body = None
+                elif isinstance(event['body'], dict):
+                    body = event['body']
+
+            # Accept ID from JSON body or query string to be robust against proxies dropping DELETE bodies
+            submission_id = None
+            if isinstance(body, dict):
+                submission_id = body.get('id')
+            if not submission_id:
+                qs = event.get('queryStringParameters') or {}
+                submission_id = qs.get('id') if isinstance(qs, dict) else None
+
             if not submission_id:
                 return {
                     'statusCode': 400,
@@ -496,7 +509,7 @@ def lambda_handler(event, context):
                         'message': 'Submission ID is required'
                     })
                 }
-            
+
             success = delete_submission(submission_id)
             if success:
                 return {
