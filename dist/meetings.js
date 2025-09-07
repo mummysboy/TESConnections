@@ -34,10 +34,8 @@ const nameError = document.getElementById('nameError');
 const communicationError = document.getElementById('communicationError');
 const timeSlotError = document.getElementById('timeSlotError');
 
-// Calendar elements
-const selectedDayElement = document.getElementById('selectedDay');
-const prevDayBtn = document.getElementById('prevDay');
-const nextDayBtn = document.getElementById('nextDay');
+// Calendar elements - will be initialized after DOM is ready
+let selectedDayElement, prevDayBtn, nextDayBtn;
 
 // Calendar data
 const calendarData = {
@@ -876,6 +874,17 @@ async function refreshCalendar() {
 
 // Initialize with smooth entrance animations
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize calendar elements
+    selectedDayElement = document.getElementById('selectedDay');
+    prevDayBtn = document.getElementById('prevDay');
+    nextDayBtn = document.getElementById('nextDay');
+    
+    // Check if calendar elements exist
+    if (!selectedDayElement || !prevDayBtn || !nextDayBtn) {
+        console.error('Calendar elements not found. Calendar will not be displayed.');
+        return;
+    }
+    
     // Load actual booked slots from database
     await loadBookedSlots();
     
