@@ -1128,12 +1128,15 @@ input:-webkit-autofill-selected:active {
 @media (max-width: 767px) {
     .communication-options {
         grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
         gap: var(--spacing-sm);
+        min-height: 160px; /* Ensure minimum height for 2 rows */
     }
     
     .option-card {
         padding: var(--spacing-md);
         min-height: 72px;
+        height: 100%; /* Fill the grid cell completely */
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
     }

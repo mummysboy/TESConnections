@@ -646,13 +646,25 @@ nameField.addEventListener('input', () => {
 const words = nameField.value.split(' ');
 const capitalizedWords = words.map(word => {
     if (word.length > 0) {
-word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }
     return word;
 });
 const capitalizedText = capitalizedWords.join(' ');
 if (nameField.value !== capitalizedText) {
     nameField.value = capitalizedText;
+}
+    }
+});
+
+infoField.addEventListener('input', () => {
+    // Capitalize first letter
+    if (infoField.value.length > 0) {
+const firstChar = infoField.value.charAt(0);
+const restOfText = infoField.value.slice(1);
+const capitalizedText = firstChar.toUpperCase() + restOfText;
+if (infoField.value !== capitalizedText) {
+    infoField.value = capitalizedText;
 }
     }
 });
