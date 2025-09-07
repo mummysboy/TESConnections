@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TESConnections - Where Real Connections Happen</title>
+    <title>TESConnections - Book a Meeting</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -18,7 +18,7 @@
                     <span class="logo-text">TESConnections</span>
                 </div>
                 <div class="header-menu">
-                    <a href="meetings.html" class="nav-link">Book Meeting</a>
+                    <a href="index.html" class="nav-link">Connect</a>
                     <button class="hamburger-menu" id="hamburgerMenu">
                         <span class="hamburger-line"></span>
                         <span class="hamburger-line"></span>
@@ -38,7 +38,7 @@
             <!-- Connection Form Card -->
             <div class="form-card">
                 <div class="form-header">
-                    <h2 class="form-title">Let's Connect</h2>
+                    <h2 class="form-title">Book a Meeting</h2>
                 </div>
 
                 <form class="connection-form" id="contactForm">
@@ -162,11 +162,36 @@
                         </div>
                     </div>
 
+                    <!-- Calendar Section -->
+                    <div class="input-group">
+                        <label class="input-label">
+                            <span class="label-text">Select Meeting Time</span>
+                        </label>
+                        <div class="calendar-container">
+                            <div class="calendar-header">
+                                <span class="calendar-title">September 12-15, 2024</span>
+                            </div>
+                            <div class="day-navigation">
+                                <button class="nav-arrow nav-arrow-left" id="prevDay">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <div class="selected-day" id="selectedDay">
+                                    <!-- Selected day will be displayed here -->
+                                </div>
+                                <button class="nav-arrow nav-arrow-right" id="nextDay">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedTimeSlot" name="selectedTimeSlot" required>
+                        <span class="error-message" id="timeSlotError"></span>
+                    </div>
+
                     <!-- Submit Button -->
                     <button type="submit" class="submit-btn" id="submitBtn">
-                        <span class="btn-text">Let's Connect</span>
+                        <span class="btn-text">Book Meeting</span>
                         <div class="btn-icon">
-                            <i class="fas fa-arrow-right"></i>
+                            <i class="fas fa-calendar-check"></i>
                         </div>
                         <div class="btn-shine"></div>
                     </button>
@@ -181,8 +206,8 @@
                             <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <h3 class="success-title">Connection Successful</h3>
-                    <p class="success-subtitle">Let's make some money!</p>
+                    <h3 class="success-title">Meeting Booked Successfully</h3>
+                    <p class="success-subtitle">We'll see you soon!</p>
                     </div>
                 </div>
             </div>
@@ -223,6 +248,6 @@
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script src="meetings.js"></script>
 </body>
 </html>
