@@ -110,8 +110,25 @@ function showLoginScreen() {
 // Show admin dashboard
 function showAdminDashboard() {
     console.log('Showing admin dashboard...');
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminDashboard').style.display = 'block';
+    const loginScreen = document.getElementById('loginScreen');
+    const adminDashboard = document.getElementById('adminDashboard');
+    
+    if (loginScreen) {
+        loginScreen.style.display = 'none';
+        console.log('Login screen hidden');
+    } else {
+        console.error('Login screen element not found!');
+    }
+    
+    if (adminDashboard) {
+        adminDashboard.style.display = 'block';
+        console.log('Admin dashboard shown, computed style:', window.getComputedStyle(adminDashboard).display);
+        console.log('Admin dashboard visibility:', window.getComputedStyle(adminDashboard).visibility);
+        console.log('Admin dashboard opacity:', window.getComputedStyle(adminDashboard).opacity);
+    } else {
+        console.error('Admin dashboard element not found!');
+    }
+    
     console.log('Admin dashboard elements updated, loading data...');
     loadData();
 }
@@ -1220,7 +1237,13 @@ function downloadCSV(content, filename) {
 
 // Show/hide loading state
 function showLoading(show) {
+    console.log('showLoading called with:', show);
+    if (!loadingState) {
+        console.error('Loading state element not found!');
+        return;
+    }
     loadingState.style.display = show ? 'block' : 'none';
+    console.log('Loading state display:', loadingState.style.display);
     if (show) {
         meetingsEmptyState.style.display = 'none';
         connectionsEmptyState.style.display = 'none';
