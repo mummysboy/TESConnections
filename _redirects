@@ -3,10 +3,12 @@
 
 # Admin dashboard
 /admin /admin.html 200
+/admin/ /admin.html 200
 /admin.html /admin.html 200
 
 # Meetings page  
 /meetings /meetings.html 200
+/meetings/ /meetings.html 200
 /meetings.html /meetings.html 200
 
 # Fallback for SPA routing (if needed)
