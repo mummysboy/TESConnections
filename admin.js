@@ -881,13 +881,14 @@ function renderMeetingsTable() {
         
         if (isMobile) {
             // Mobile layout - show only essential info
+            const actualTimeSlot = item.timeSlot || 'Not scheduled';
             return `
             <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
                 <td class="mobile-hide"></td>
                 <td class="name-cell">
                     <div class="mobile-name-info">
                         <div class="name">${cleanItem.name}</div>
-                        <div class="mobile-meeting-time">${cleanItem.meetingTime}</div>
+                        <div class="mobile-meeting-time">${actualTimeSlot}</div>
                     </div>
                 </td>
                 <td class="meeting-time mobile-hide">${cleanItem.meetingTime}</td>
