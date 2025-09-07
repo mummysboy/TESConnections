@@ -28,18 +28,6 @@
                     <i class="fas fa-key"></i>
                     Sign In with PIN
                 </button>
-                <button id="cognitoLoginBtn" class="login-btn cognito-login-btn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Sign In with Cognito
-                </button>
-                <button id="testDashboardBtn" class="login-btn" style="background: #ff6b6b; margin-top: 10px;">
-                    <i class="fas fa-bug"></i>
-                    Test Dashboard (Debug)
-                </button>
-                <button id="debugInfoBtn" class="login-btn" style="background: #6b7280; margin-top: 10px;">
-                    <i class="fas fa-info-circle"></i>
-                    Debug Info
-                </button>
             </div>
         </div>
 
@@ -179,19 +167,21 @@
                 </div>
                 
                 <div class="table-wrapper">
-                    <table class="data-table" id="meetingsTable">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>Name</th>
-                                <th>Meeting Time</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="meetingsTableBody">
-                            <!-- Meetings will be populated by JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="mobile-table-container">
+                        <table class="data-table" id="meetingsTable">
+                            <thead>
+                                <tr>
+                                    <th class="mobile-hide"></th>
+                                    <th>Name</th>
+                                    <th class="mobile-hide">Meeting Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meetingsTableBody">
+                                <!-- Meetings will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="empty-state" id="meetingsEmptyState" style="display: none;">
@@ -224,19 +214,21 @@
                 </div>
                 
                 <div class="table-wrapper">
-                    <table class="data-table" id="connectionsTable">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Contact Info</th>
-                                <th>Meeting Time</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="connectionsTableBody">
-                            <!-- Connections will be populated by JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="mobile-table-container">
+                        <table class="data-table" id="connectionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th class="mobile-hide">Contact Info</th>
+                                    <th class="mobile-hide">Meeting Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="connectionsTableBody">
+                                <!-- Connections will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="empty-state" id="connectionsEmptyState" style="display: none;">

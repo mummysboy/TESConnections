@@ -42,12 +42,66 @@ let allData = [];
 let meetingsData = [];
 let connectionsData = [];
 
+// Mobile optimization function
+function optimizeForMobile() {
+    // Prevent zoom on input focus for iOS
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
+    
+    // Add touch-friendly styles
+    document.body.style.touchAction = 'manipulation';
+    
+    // Optimize table scrolling
+    const tableContainers = document.querySelectorAll('.mobile-table-container');
+    tableContainers.forEach(container => {
+        container.style.webkitOverflowScrolling = 'touch';
+        container.style.overflowX = 'auto';
+    });
+    
+    // Add mobile-specific event listeners
+    addMobileEventListeners();
+}
+
+// Add mobile-specific event listeners
+function addMobileEventListeners() {
+    // Prevent double-tap zoom on buttons
+    const buttons = document.querySelectorAll('.action-btn, .btn, button');
+    buttons.forEach(button => {
+        button.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            button.click();
+        }, { passive: false });
+    });
+    
+    // Optimize table row interactions
+    const tableRows = document.querySelectorAll('tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('touchstart', function(e) {
+            this.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+        });
+        
+        row.addEventListener('touchend', function(e) {
+            setTimeout(() => {
+                this.style.backgroundColor = '';
+            }, 150);
+        });
+    });
+}
+
 // Initialize DOM elements
 function initializeDOMElements() {
     totalMeetingsEl = document.getElementById('totalMeetings');
     todayMeetingsEl = document.getElementById('todayMeetings');
     totalConnectionsEl = document.getElementById('totalConnections');
     loadingState = document.getElementById('loadingState');
+    
+    // Add mobile-specific optimizations
+    if ('ontouchstart' in window) {
+        document.body.classList.add('touch-device');
+        optimizeForMobile();
+    }
 
     // Meetings Section
     meetingsTableBody = document.getElementById('meetingsTableBody');
@@ -822,26 +876,56 @@ function renderMeetingsTable() {
         // Validate and clean data
         const cleanItem = validateAndCleanMeetingData(item);
         
-        return `
-        <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
-            <td></td>
-            <td class="name-cell">${cleanItem.name}</td>
-            <td class="meeting-time">${cleanItem.meetingTime}</td>
-            <td class="meeting-actions">
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'meeting')" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="action-btn edit-btn" onclick="event.stopPropagation(); editMeeting('${cleanItem.id}')" title="Edit Meeting">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Meeting">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `;
+        // Check if mobile device
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            // Mobile layout - show only essential info
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
+                <td class="mobile-hide"></td>
+                <td class="name-cell">
+                    <div class="mobile-name-info">
+                        <div class="name">${cleanItem.name}</div>
+                        <div class="mobile-meeting-time">${cleanItem.meetingTime}</div>
+                    </div>
+                </td>
+                <td class="meeting-time mobile-hide">${cleanItem.meetingTime}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn-small view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'meeting')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn-small delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Meeting">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        } else {
+            // Desktop layout - show all columns
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
+                <td></td>
+                <td class="name-cell">${cleanItem.name}</td>
+                <td class="meeting-time">${cleanItem.meetingTime}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'meeting')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" onclick="event.stopPropagation(); editMeeting('${cleanItem.id}')" title="Edit Meeting">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Meeting">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        }
     }).join('');
 }
 

@@ -1129,23 +1129,42 @@ input[type="url"].form-input {
     .form-input, .form-textarea {
         font-size: 16px; /* Prevents zoom on iOS */
         touch-action: manipulation;
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: transparent;
     }
     
     /* Improve button touch targets */
     .submit-btn {
         min-height: 48px;
         touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
     }
     
     .nav-arrow {
         min-width: 44px;
         min-height: 44px;
         touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
     }
     
     .time-slot {
         min-height: 48px;
         touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Optimize animations for mobile */
+    .option-card, .time-slot, .nav-arrow, .submit-btn {
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    /* Prevent text selection on interactive elements */
+    .option-card, .time-slot, .nav-arrow, .submit-btn {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
     }
 }
 
@@ -1214,6 +1233,25 @@ input[type="url"].form-input {
 .touch-device .submit-btn:active {
     transform: scale(0.95);
     opacity: 0.8;
+}
+
+/* Force styling for inputs to prevent mobile browser interference */
+.force-styling {
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+    background: #0a0a0a !important;
+}
+
+.force-styling:focus {
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+    background: #0a0a0a !important;
+}
+
+.force-styling:active {
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+    background: #0a0a0a !important;
 }
 
 /* Accessibility */
@@ -2004,71 +2042,291 @@ input[type="url"].form-input {
     margin: 0 auto;
 }
 
+/* Mobile-first Admin Dashboard Styles */
+
+/* Mobile Table Container */
+.mobile-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-lg);
+    background: var(--secondary-black);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hide columns on mobile */
+.mobile-hide {
+    display: none;
+}
+
 /* Mobile responsiveness for admin */
 @media (max-width: 768px) {
+    /* Admin Header */
+    .admin-header {
+        padding: var(--spacing-lg) 0;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .admin-title {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .admin-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    /* Stats Grid - Mobile First */
     .stats-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .stat-card {
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+    }
+    
+    /* Data Containers */
+    .data-container {
+        margin-bottom: var(--spacing-xl);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
     }
     
     .table-header {
         flex-direction: column;
         gap: var(--spacing-md);
         align-items: stretch;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .table-title {
+        font-size: 1.1rem;
+        text-align: center;
     }
     
     .table-actions {
         justify-content: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .action-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.85rem;
+        min-height: 40px;
+        flex: 1;
+        max-width: 120px;
+    }
+    
+    /* Mobile Table Styles */
+    .data-table {
+        font-size: 0.8rem;
+        width: 100%;
+        min-width: 600px; /* Ensure horizontal scroll on very small screens */
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: var(--spacing-sm);
+        white-space: nowrap;
+    }
+    
+    .data-table th:first-child,
+    .data-table td:first-child {
+        padding-left: var(--spacing-md);
+    }
+    
+    .data-table th:last-child,
+    .data-table td:last-child {
+        padding-right: var(--spacing-md);
+    }
+    
+    /* Name column - always visible */
+    .data-table th:nth-child(2),
+    .data-table td:nth-child(2) {
+        min-width: 120px;
+        font-weight: 600;
+    }
+    
+    /* Actions column - always visible */
+    .data-table th:last-child,
+    .data-table td:last-child {
+        min-width: 80px;
+        text-align: center;
+    }
+    
+    /* Action buttons in mobile */
+    .action-btn-small {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.75rem;
+        min-height: 32px;
+        min-width: 32px;
+    }
+    
+    /* Empty states */
+    .empty-state {
+        padding: var(--spacing-xl);
+        text-align: center;
+    }
+    
+    .empty-icon {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .empty-state h3 {
+        font-size: 1.1rem;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+        color: var(--accent-gray);
+    }
+    
+    /* Count badges */
+    .count-badge {
+        font-size: 0.75rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        margin-left: var(--spacing-sm);
+    }
+    
+    /* Mobile-specific table elements */
+    .mobile-name-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .mobile-name-info .name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .mobile-meeting-time {
+        font-size: 0.8rem;
+        color: var(--accent-gray);
+        font-weight: 400;
+    }
+    
+    .mobile-connection-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .mobile-connection-info .name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .mobile-contact-info {
+        font-size: 0.8rem;
+        color: var(--accent-gray);
+        font-weight: 400;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .admin-header {
+        padding: var(--spacing-md) 0;
+    }
+    
+    .admin-title {
+        font-size: 1.3rem;
+    }
+    
+    .data-container {
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .stat-card {
+        padding: var(--spacing-md);
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .table-actions {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .action-btn {
+        max-width: none;
+        width: 100%;
     }
     
     .data-table {
         font-size: 0.75rem;
+        min-width: 500px;
     }
     
-    /* Meetings table mobile improvements */
-    #meetingsTable th,
-    #meetingsTable td {
-        padding: var(--spacing-md) var(--spacing-sm);
+    .data-table th,
+    .data-table td {
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}
+
+/* Tablet responsiveness for admin */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-lg);
     }
     
-    #meetingsTable .name-cell {
-        font-size: 1rem;
-        min-width: 100px;
-    }
-    
-    #meetingsTable .meeting-time {
+    .data-table {
         font-size: 0.85rem;
-        min-width: 140px;
-        padding: var(--spacing-sm);
     }
     
-    .contact-info-cell {
-        min-width: 180px;
-        padding: var(--spacing-sm);
+    .table-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
     }
     
-    .contact-method {
-        font-size: 0.8rem;
-        padding: var(--spacing-xs);
+    .table-actions {
+        justify-content: flex-end;
+    }
+}
+
+/* Desktop - show all columns */
+@media (min-width: 1025px) {
+    .mobile-hide {
+        display: table-cell;
     }
     
-    .contact-details {
-        font-size: 0.85rem;
-        padding: var(--spacing-xs);
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-xl);
     }
     
-    .meeting-actions {
-        min-width: 100px;
+    .data-table {
+        font-size: 0.9rem;
     }
     
-    .action-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 0.75rem;
-    }
-    
-    .action-buttons {
-        gap: var(--spacing-xs);
+    .data-table th,
+    .data-table td {
+        padding: var(--spacing-md);
     }
 }
 
@@ -2088,6 +2346,59 @@ input[type="url"].form-input {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
+    padding: var(--spacing-md);
+}
+
+/* Mobile modal styles */
+@media (max-width: 768px) {
+    .detail-modal-overlay {
+        padding: var(--spacing-sm);
+        align-items: flex-start;
+        padding-top: var(--spacing-lg);
+    }
+    
+    .detail-modal-content {
+        width: 100%;
+        max-width: none;
+        max-height: calc(100vh - var(--spacing-xl));
+        margin: 0;
+        border-radius: var(--radius-lg);
+    }
+    
+    .detail-modal-header {
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+    
+    .detail-modal-body {
+        padding: var(--spacing-md);
+    }
+    
+    .detail-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+    
+    .detail-label {
+        font-size: 0.8rem;
+        margin-bottom: 0;
+    }
+    
+    .detail-value {
+        font-size: 0.9rem;
+        word-break: break-word;
+    }
+    
+    .detail-actions {
+        padding: var(--spacing-md);
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .detail-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 .detail-modal-overlay.active {

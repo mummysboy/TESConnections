@@ -298,25 +298,41 @@ throw error;
     }
 }
 
-// Communication option selection
+// Communication option selection with mobile optimization
 optionCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-// Add ripple effect
-addRippleEffect(card, e);
-// Remove selection from all cards
-optionCards.forEach(c => c.classList.remove('selected'));
-// Add selection to clicked card
-card.classList.add('selected');
-// Update hidden input
-const value = card.getAttribute('data-value');
-communicationField.value = value;
-// Clear any communication errors
-clearError('communication');
-// Add haptic feedback if available
-if (navigator.vibrate) {
-    navigator.vibrate(50);
-}
-    });
+    let isProcessing = false;
+    
+    const handleSelection = (e) => {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Add ripple effect
+        addRippleEffect(card, e);
+        // Remove selection from all cards
+        optionCards.forEach(c => c.classList.remove('selected'));
+        // Add selection to clicked card
+        card.classList.add('selected');
+        // Update hidden input
+        const value = card.getAttribute('data-value');
+        communicationField.value = value;
+        // Clear any communication errors
+        clearError('communication');
+        // Add haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        
+        // Reset processing flag after a short delay
+        setTimeout(() => {
+            isProcessing = false;
+        }, 100);
+    };
+    
+    // Use only click events for better mobile compatibility
+    card.addEventListener('click', handleSelection);
 });
 
 // Form submission
@@ -564,31 +580,22 @@ field.scrollIntoView({ behavior: 'smooth', block: 'center' });
 function forceInputStyling() {
     const inputs = document.querySelectorAll('.form-input, .form-textarea');
     inputs.forEach(input => {
-// Force styling on various events
-const forceStyle = () => {
-    input.style.backgroundColor = '#0a0a0a';
-    input.style.color = '#ffffff';
-    input.style.background = '#0a0a0a';
-};
-// Apply on multiple events
-input.addEventListener('input', forceStyle);
-input.addEventListener('change', forceStyle);
-input.addEventListener('focus', forceStyle);
-input.addEventListener('blur', forceStyle);
-input.addEventListener('keyup', forceStyle);
-input.addEventListener('keydown', forceStyle);
-// Apply immediately
-forceStyle();
-// Use MutationObserver to catch any style changes
-const observer = new MutationObserver(() => {
-    if (input.style.backgroundColor !== '#0a0a0a' || input.style.color !== '#ffffff') {
-forceStyle();
-    }
-});
-observer.observe(input, {
-    attributes: true,
-    attributeFilter: ['style']
-});
+        // Force styling on various events
+        const forceStyle = () => {
+            input.style.backgroundColor = '#0a0a0a';
+            input.style.color = '#ffffff';
+            input.style.background = '#0a0a0a';
+        };
+        
+        // Apply immediately
+        forceStyle();
+        
+        // Apply on focus events only to avoid conflicts
+        input.addEventListener('focus', forceStyle);
+        input.addEventListener('blur', forceStyle);
+        
+        // Use a more efficient approach with CSS classes instead of MutationObserver
+        input.classList.add('force-styling');
     });
 }
 
@@ -726,10 +733,5 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             openSelectedContactApp();
         });
-        // Support touch devices
-        infoField.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            openSelectedContactApp();
-        }, { passive: false });
     }
 });

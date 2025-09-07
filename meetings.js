@@ -194,17 +194,16 @@ if (slot.booked) {
 slotElement.innerHTML = `
     <div class="time-slot-time">${slot.time}</div>
 `;
-if (!slot.booked) {
-    const handleTimeSlotSelection = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        selectTimeSlot(slot);
-    };
-    
-    // Add both click and touchstart events for better mobile support
-    slotElement.addEventListener('click', handleTimeSlotSelection);
-    slotElement.addEventListener('touchstart', handleTimeSlotSelection, { passive: false });
-}
+    if (!slot.booked) {
+        const handleTimeSlotSelection = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectTimeSlot(slot);
+        };
+        
+        // Add click event for mobile support
+        slotElement.addEventListener('click', handleTimeSlotSelection);
+    }
 grid.appendChild(slotElement);
     });
     
@@ -506,9 +505,14 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
     }
 }
 
-// Communication option selection with touch support
+// Communication option selection with mobile optimization
 optionCards.forEach(card => {
+    let isProcessing = false;
+    
     const handleSelection = (e) => {
+        if (isProcessing) return;
+        isProcessing = true;
+        
         e.preventDefault();
         e.stopPropagation();
         
@@ -527,11 +531,15 @@ optionCards.forEach(card => {
         if (navigator.vibrate) {
             navigator.vibrate(50);
         }
+        
+        // Reset processing flag after a short delay
+        setTimeout(() => {
+            isProcessing = false;
+        }, 100);
     };
     
-    // Add both click and touchstart events for better mobile support
+    // Use only click events for better mobile compatibility
     card.addEventListener('click', handleSelection);
-    card.addEventListener('touchstart', handleSelection, { passive: false });
 });
 
 // Form submission with mobile support
@@ -713,29 +721,23 @@ const hamburgerMenu = document.getElementById('hamburgerMenu');
 const aboutModal = document.getElementById('aboutModal');
 const closeModal = document.getElementById('closeModal');
 
-// Open modal when hamburger menu is clicked with touch support
-const handleHamburgerClick = (e) => {
+// Open modal when hamburger menu is clicked
+hamburgerMenu.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     hamburgerMenu.classList.toggle('active');
     aboutModal.classList.add('active');
     document.body.style.overflow = 'hidden';
-};
+});
 
-hamburgerMenu.addEventListener('click', handleHamburgerClick);
-hamburgerMenu.addEventListener('touchstart', handleHamburgerClick, { passive: false });
-
-// Close modal when close button is clicked with touch support
-const handleCloseModal = (e) => {
+// Close modal when close button is clicked
+closeModal.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     hamburgerMenu.classList.remove('active');
     aboutModal.classList.remove('active');
     document.body.style.overflow = '';
-};
-
-closeModal.addEventListener('click', handleCloseModal);
-closeModal.addEventListener('touchstart', handleCloseModal, { passive: false });
+});
 
 // Close modal when clicking outside
 aboutModal.addEventListener('click', (e) => {
@@ -792,31 +794,22 @@ field.scrollIntoView({ behavior: 'smooth', block: 'center' });
 function forceInputStyling() {
     const inputs = document.querySelectorAll('.form-input, .form-textarea');
     inputs.forEach(input => {
-// Force styling on various events
-const forceStyle = () => {
-    input.style.backgroundColor = '#0a0a0a';
-    input.style.color = '#ffffff';
-    input.style.background = '#0a0a0a';
-};
-// Apply on multiple events
-input.addEventListener('input', forceStyle);
-input.addEventListener('change', forceStyle);
-input.addEventListener('focus', forceStyle);
-input.addEventListener('blur', forceStyle);
-input.addEventListener('keyup', forceStyle);
-input.addEventListener('keydown', forceStyle);
-// Apply immediately
-forceStyle();
-// Use MutationObserver to catch any style changes
-const observer = new MutationObserver(() => {
-    if (input.style.backgroundColor !== '#0a0a0a' || input.style.color !== '#ffffff') {
-forceStyle();
-    }
-});
-observer.observe(input, {
-    attributes: true,
-    attributeFilter: ['style']
-});
+        // Force styling on various events
+        const forceStyle = () => {
+            input.style.backgroundColor = '#0a0a0a';
+            input.style.color = '#ffffff';
+            input.style.background = '#0a0a0a';
+        };
+        
+        // Apply immediately
+        forceStyle();
+        
+        // Apply on focus events only to avoid conflicts
+        input.addEventListener('focus', forceStyle);
+        input.addEventListener('blur', forceStyle);
+        
+        // Use a more efficient approach with CSS classes instead of MutationObserver
+        input.classList.add('force-styling');
     });
 }
 
@@ -866,30 +859,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if ('ontouchstart' in window) {
         // Disable hover effects on touch devices
         document.body.classList.add('touch-device');
-        
-        // Prevent double-tap zoom on buttons
-        document.addEventListener('touchend', function(e) {
-            if (e.target.classList.contains('option-card') || 
-                e.target.classList.contains('time-slot') ||
-                e.target.classList.contains('nav-arrow') ||
-                e.target.classList.contains('submit-btn')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        // Prevent scroll issues on mobile
-        document.addEventListener('touchmove', function(e) {
-            // Allow scrolling on the main container
-            if (e.target.closest('.app-main') || e.target.closest('.modal-content')) {
-                return;
-            }
-            // Prevent scrolling on interactive elements
-            if (e.target.classList.contains('option-card') || 
-                e.target.classList.contains('time-slot') ||
-                e.target.classList.contains('nav-arrow')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
     }
     
     // Initialize calendar elements
@@ -911,23 +880,18 @@ return;
     // Initialize day navigation
     updateDayDisplay();
     
-    // Add event listeners for navigation buttons with touch support
-    const handlePrevDay = (e) => {
+    // Add event listeners for navigation buttons
+    prevDayBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         navigateToPreviousDay();
-    };
+    });
     
-    const handleNextDay = (e) => {
+    nextDayBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         navigateToNextDay();
-    };
-    
-    prevDayBtn.addEventListener('click', handlePrevDay);
-    prevDayBtn.addEventListener('touchstart', handlePrevDay, { passive: false });
-    nextDayBtn.addEventListener('click', handleNextDay);
-    nextDayBtn.addEventListener('touchstart', handleNextDay, { passive: false });
+    });
     
     // Add keyboard navigation
     document.addEventListener('keydown', (e) => {

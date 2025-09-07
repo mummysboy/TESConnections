@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # TESConnections Deployment Script
-# Usage: ./deploy.sh [environment]
+# Usage: ./deploy.sh [environment] 
 # Example: ./deploy.sh prod
 
 set -e  # Exit on any error
