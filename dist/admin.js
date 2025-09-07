@@ -1,12 +1,6 @@
-// TESConnections - Admin Dashboard JavaScript with Cognito Authentication
+// TESConnections - Admin Dashboard JavaScript
 
-// Cognito Configuration
-const COGNITO_CONFIG = {
-    // These will be populated from CloudFormation outputs
-    userPoolId: 'us-west-1_NFh1iQlAb', // Updated with actual Cognito User Pool ID
-    userPoolClientId: '7ht4bhg5016dbd337ukmv6947e', // Updated with new Client ID
-    region: 'us-west-1'
-};
+console.log('Admin.js loaded successfully'); // Basic debug log
 
 // Configuration
 const CONFIG = {
@@ -19,82 +13,88 @@ const CONFIG = {
     RETRY_DELAY: 1000
 };
 
-// Cognito User Pool and Client
-let userPool;
-let userPoolClient;
-let currentUser;
+console.log('CONFIG loaded:', CONFIG); // Debug log
 
 // Authentication state
 let isAuthenticated = false;
 let authToken = null;
 
-// DOM Elements
-const totalMeetingsEl = document.getElementById('totalMeetings');
-const todayMeetingsEl = document.getElementById('todayMeetings');
-const totalConnectionsEl = document.getElementById('totalConnections');
-const loadingState = document.getElementById('loadingState');
+// DOM Elements - will be initialized after DOM loads
+let totalMeetingsEl;
+let todayMeetingsEl;
+let totalConnectionsEl;
+let loadingState;
 
 // Meetings Section
-const meetingsTableBody = document.getElementById('meetingsTableBody');
-const meetingsCount = document.getElementById('meetingsCount');
-const meetingsEmptyState = document.getElementById('meetingsEmptyState');
-const refreshMeetings = document.getElementById('refreshMeetings');
-const exportMeetings = document.getElementById('exportMeetings');
+let meetingsTableBody;
+let meetingsCount;
+let meetingsEmptyState;
+let refreshMeetings;
+let exportMeetings;
 
 // Connections Section
-const connectionsTableBody = document.getElementById('connectionsTableBody');
-const connectionsCount = document.getElementById('connectionsCount');
-const connectionsEmptyState = document.getElementById('connectionsEmptyState');
-const refreshConnections = document.getElementById('refreshConnections');
-const exportConnections = document.getElementById('exportConnections');
+let connectionsTableBody;
+let connectionsCount;
+let connectionsEmptyState;
+let refreshConnections;
+let exportConnections;
 
 // Data storage
 let allData = [];
 let meetingsData = [];
 let connectionsData = [];
 
+// Initialize DOM elements
+function initializeDOMElements() {
+    totalMeetingsEl = document.getElementById('totalMeetings');
+    todayMeetingsEl = document.getElementById('todayMeetings');
+    totalConnectionsEl = document.getElementById('totalConnections');
+    loadingState = document.getElementById('loadingState');
+
+    // Meetings Section
+    meetingsTableBody = document.getElementById('meetingsTableBody');
+    meetingsCount = document.getElementById('meetingsCount');
+    meetingsEmptyState = document.getElementById('meetingsEmptyState');
+    refreshMeetings = document.getElementById('refreshMeetings');
+    exportMeetings = document.getElementById('exportMeetings');
+
+    // Connections Section
+    connectionsTableBody = document.getElementById('connectionsTableBody');
+    connectionsCount = document.getElementById('connectionsCount');
+    connectionsEmptyState = document.getElementById('connectionsEmptyState');
+    refreshConnections = document.getElementById('refreshConnections');
+    exportConnections = document.getElementById('exportConnections');
+}
+
 // Initialize admin dashboard
 document.addEventListener('DOMContentLoaded', () => {
-    initializeCognito();
+    console.log('DOMContentLoaded event fired'); // Debug log
+    initializeDOMElements();
     checkAuthentication();
     setupEventListeners();
     setupModal();
+    console.log('Admin dashboard initialization completed'); // Debug log
 });
-
-// Initialize Cognito
-function initializeCognito() {
-    try {
-        userPool = new AmazonCognitoIdentity.CognitoUserPool({
-            UserPoolId: COGNITO_CONFIG.userPoolId,
-            ClientId: COGNITO_CONFIG.userPoolClientId
-        });
-        
-        console.log('Cognito initialized successfully');
-    } catch (error) {
-        console.error('Error initializing Cognito:', error);
-        // Don't show error for Cognito initialization failure
-        // PIN authentication will still work
-    }
-}
 
 // Check if user is already authenticated
 function checkAuthentication() {
-    const cognitoUser = userPool.getCurrentUser();
+    console.log('checkAuthentication called'); // Debug log
+    // Check if user is already authenticated via PIN
+    const storedAuth = localStorage.getItem('admin_authenticated');
+    const storedToken = localStorage.getItem('admin_token');
+    console.log('Stored auth:', storedAuth); // Debug log
+    console.log('Stored token:', storedToken); // Debug log
     
-    if (cognitoUser) {
-        cognitoUser.getSession((err, session) => {
-            if (err) {
-                console.log('No valid session found:', err);
-                showLoginScreen();
-            } else {
-                console.log('Valid session found');
-                authToken = session.getIdToken().getJwtToken();
-                isAuthenticated = true;
-                showAdminDashboard();
-                updateUserInfo(session.getIdToken().payload);
-            }
-        });
+    if (storedAuth === 'true' && storedToken) {
+        console.log('User is already authenticated, showing admin dashboard'); // Debug log
+        isAuthenticated = true;
+        authToken = storedToken;
+        showAdminDashboard();
     } else {
+        console.log('User not authenticated, showing login screen'); // Debug log
+        // Clear any invalid stored data
+        localStorage.removeItem('admin_authenticated');
+        localStorage.removeItem('admin_token');
         showLoginScreen();
     }
 }
@@ -109,8 +109,60 @@ function showLoginScreen() {
 
 // Show admin dashboard
 function showAdminDashboard() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminDashboard').style.display = 'block';
+    console.log('showAdminDashboard called'); // Debug log
+    
+    const loginScreen = document.getElementById('loginScreen');
+    const adminDashboard = document.getElementById('adminDashboard');
+    
+    console.log('loginScreen element:', loginScreen); // Debug log
+    console.log('adminDashboard element:', adminDashboard); // Debug log
+    
+    // Ensure PIN modal is completely hidden first
+    const pinModal = document.getElementById('pinModal');
+    if (pinModal) {
+        pinModal.classList.remove('show');
+        pinModal.style.display = 'none';
+        console.log('PIN modal hidden'); // Debug log
+    }
+    
+    if (loginScreen) {
+        loginScreen.style.display = 'none';
+        console.log('Login screen hidden'); // Debug log
+    } else {
+        console.log('ERROR: loginScreen element not found!'); // Debug log
+    }
+    
+    if (adminDashboard) {
+        // FORCE VISIBLE - Add bright red background and text
+        adminDashboard.innerHTML = `
+            <div style="background: red; color: white; padding: 50px; font-size: 24px; text-align: center; min-height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 99999;">
+                <h1>🎉 ADMIN DASHBOARD IS WORKING! 🎉</h1>
+                <p>If you can see this red screen, the dashboard is working!</p>
+                <p>Data loaded: ${allData.length} items</p>
+                <button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; background: white; color: red; border: none; border-radius: 5px;">Refresh Page</button>
+            </div>
+        `;
+        adminDashboard.style.display = 'block';
+        adminDashboard.style.position = 'fixed';
+        adminDashboard.style.top = '0';
+        adminDashboard.style.left = '0';
+        adminDashboard.style.width = '100vw';
+        adminDashboard.style.height = '100vh';
+        adminDashboard.style.zIndex = '99999';
+        adminDashboard.style.backgroundColor = 'red';
+        adminDashboard.style.overflow = 'visible';
+        
+        // Prevent any other code from modifying this
+        adminDashboard.setAttribute('data-debug-mode', 'true');
+        
+        console.log('Admin dashboard shown'); // Debug log
+        console.log('Admin dashboard computed style:', window.getComputedStyle(adminDashboard).display); // Debug log
+        console.log('Admin dashboard position:', adminDashboard.getBoundingClientRect()); // Debug log
+        console.log('Admin dashboard innerHTML length:', adminDashboard.innerHTML.length); // Debug log
+    } else {
+        console.log('ERROR: adminDashboard element not found!'); // Debug log
+    }
+    
     loadData();
 }
 
@@ -146,6 +198,7 @@ function showPinModal() {
 function hidePinModal() {
     if (pinModal) {
         pinModal.classList.remove('show');
+        pinModal.style.display = 'none'; // Ensure modal is completely hidden
         pinEntry = '';
         updatePinDisplay();
     }
@@ -256,6 +309,8 @@ function removePinDigit() {
 async function submitPin() {
     if (pinEntry.length !== 4) return;
     
+    console.log('Submitting PIN:', pinEntry); // Debug log
+    
     try {
         showPinLoading(true);
         
@@ -268,12 +323,21 @@ async function submitPin() {
             body: JSON.stringify({ pin: pinEntry })
         });
         
+        console.log('PIN response status:', response.status); // Debug log
+        
         const data = await response.json();
+        console.log('PIN response data:', data); // Debug log
         
         if (response.ok && data.success) {
+            console.log('PIN authentication successful'); // Debug log
+            console.log('Response data:', data); // Debug log
             // Store the session token
             authToken = data.sessionToken;
             isAuthenticated = true;
+            
+            // Store authentication state in localStorage
+            localStorage.setItem('admin_authenticated', 'true');
+            localStorage.setItem('admin_token', authToken);
             
             // Create user object
             const user = {
@@ -281,15 +345,20 @@ async function submitPin() {
                 name: 'Admin User'
             };
             
+            console.log('About to hide PIN modal and show dashboard'); // Debug log
             hidePinModal();
-            showAdminDashboard();
-            updateUserInfo(user);
-            showSuccess('PIN authentication successful');
+            // Small delay to ensure modal is hidden before showing dashboard
+            setTimeout(() => {
+                console.log('Timeout executed - showing admin dashboard'); // Debug log
+                showAdminDashboard();
+                updateUserInfo(user);
+            }, 100);
         } else {
+            console.log('PIN authentication failed:', data.message); // Debug log
             showPinError(data.message || 'Invalid PIN. Please try again.');
         }
     } catch (error) {
-        console.error('PIN authentication error:', error);
+        console.error('PIN authentication error:', error); // Debug log
         showPinError('Authentication failed. Please try again.');
     } finally {
         showPinLoading(false);
@@ -331,87 +400,50 @@ function cleanupPinModal() {
     document.removeEventListener('keydown', handlePinKeydown);
 }
 
-// Handle Cognito login (fallback)
-function handleCognitoLogin() {
-    const loginUrl = `https://tes-connections-admin-prod-851725394837.auth.${COGNITO_CONFIG.region}.amazoncognito.com/login?client_id=${COGNITO_CONFIG.userPoolClientId}&response_type=token&scope=email+openid+profile&redirect_uri=${encodeURIComponent(window.location.href)}`;
-    
-    // Redirect to Cognito hosted UI
-    window.location.href = loginUrl;
-}
-
 // Handle logout
 function handleLogout() {
-    const cognitoUser = userPool.getCurrentUser();
-    
-    if (cognitoUser) {
-        cognitoUser.signOut();
-    }
-    
-    // Clear local storage
-    localStorage.clear();
+    // Clear authentication data
+    localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_token');
     sessionStorage.clear();
+    
+    // Reset authentication state
+    isAuthenticated = false;
+    authToken = null;
     
     // Show login screen
     showLoginScreen();
-}
-
-// Handle authentication callback (when returning from Cognito)
-function handleAuthCallback() {
-    const urlParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = urlParams.get('access_token');
-    const idToken = urlParams.get('id_token');
-    
-    if (idToken) {
-        // Store tokens
-        localStorage.setItem('cognito_id_token', idToken);
-        if (accessToken) {
-            localStorage.setItem('cognito_access_token', accessToken);
-        }
-        
-        // Decode and use the token
-        const tokenPayload = JSON.parse(atob(idToken.split('.')[1]));
-        authToken = idToken;
-        isAuthenticated = true;
-        
-        showAdminDashboard();
-        updateUserInfo(tokenPayload);
-        
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
 }
 
 // Setup event listeners
 function setupEventListeners() {
     // Authentication events
     const pinLoginBtn = document.getElementById('pinLoginBtn');
-    const cognitoLoginBtn = document.getElementById('cognitoLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     
     if (pinLoginBtn) {
         pinLoginBtn.addEventListener('click', handlePinLogin);
     }
     
-    if (cognitoLoginBtn) {
-        cognitoLoginBtn.addEventListener('click', handleCognitoLogin);
-    }
-    
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
     }
     
-    // Check for authentication callback on page load
-    if (window.location.hash.includes('access_token') || window.location.hash.includes('id_token')) {
-        handleAuthCallback();
+    // Meetings section
+    if (refreshMeetings) {
+        refreshMeetings.addEventListener('click', loadData);
+    }
+    if (exportMeetings) {
+        exportMeetings.addEventListener('click', () => exportData('meetings'));
     }
     
-    // Meetings section
-    refreshMeetings.addEventListener('click', loadData);
-    exportMeetings.addEventListener('click', () => exportData('meetings'));
-    
     // Connections section
-    refreshConnections.addEventListener('click', loadData);
-    exportConnections.addEventListener('click', () => exportData('connections'));
+    if (refreshConnections) {
+        refreshConnections.addEventListener('click', loadData);
+    }
+    if (exportConnections) {
+        exportConnections.addEventListener('click', () => exportData('connections'));
+    }
     
     // Use event delegation for table row clicks
     setupTableClickDelegation();
@@ -419,25 +451,28 @@ function setupEventListeners() {
 
 // Load data from API
 async function loadData() {
+    console.log('loadData called'); // Debug log
     showLoading(true);
     
     try {
+        console.log('Fetching admin data...'); // Debug log
         const data = await fetchAdminData();
+        console.log('Admin data received:', data); // Debug log
         
         if (data.length === 0) {
+            console.log('No data found in database'); // Debug log
             showError('No data found in database.');
             meetingsData = [];
             connectionsData = [];
         } else {
             allData = data;
-            console.log('Processing data:', allData);
             
             // Separate meetings and connections
             meetingsData = allData.filter(item => item.type === 'meeting');
             connectionsData = allData.filter(item => item.type === 'connection');
             
-            console.log('Meetings data:', meetingsData);
-            console.log('Connections data:', connectionsData);
+            console.log('Meetings data:', meetingsData); // Debug log
+            console.log('Connections data:', connectionsData); // Debug log
             
             // Sort meetings by actual meeting time (soonest to latest)
             meetingsData.sort((a, b) => {
@@ -459,11 +494,13 @@ async function loadData() {
             connectionsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
         
+        console.log('Updating stats and rendering tables...'); // Debug log
         updateStats();
         renderTables();
+        console.log('Data loading completed successfully'); // Debug log
         
     } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error in loadData:', error); // Debug log
         showError('Failed to load data. Please try again.');
     } finally {
         showLoading(false);
@@ -480,19 +517,27 @@ async function fetchAdminData() {
         // Add authorization header if authenticated
         if (isAuthenticated && authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
+            console.log('Adding Authorization header with token:', authToken); // Debug log
+        } else {
+            console.log('No auth token available. isAuthenticated:', isAuthenticated, 'authToken:', authToken); // Debug log
         }
+        
+        console.log('Making request to:', CONFIG.ADMIN_ENDPOINT); // Debug log
+        console.log('Request headers:', headers); // Debug log
         
         const response = await fetch(CONFIG.ADMIN_ENDPOINT, {
             method: 'GET',
             headers: headers
         });
         
+        console.log('Response status:', response.status); // Debug log
+        console.log('Response headers:', response.headers); // Debug log
+        
         if (!response.ok) {
             throw new Error(`Failed to fetch data: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Raw API response:', data);
         
         // Handle different response formats
         if (Array.isArray(data)) {
@@ -502,12 +547,11 @@ async function fetchAdminData() {
         } else if (data.data) {
             return data.data;
         } else {
-            console.warn('Unexpected API response format:', data);
             return [];
         }
         
     } catch (error) {
-        console.error('Error fetching admin data:', error);
+        console.error('fetchAdminData error:', error); // Debug log
         showError('Failed to load data from database. Please check your connection and try again.');
         return [];
     }
@@ -525,13 +569,13 @@ function updateStats() {
         return meetingDate === today;
     }).length;
     
-    totalMeetingsEl.textContent = totalMeetings;
-    totalConnectionsEl.textContent = totalConnections;
-    todayMeetingsEl.textContent = todayMeetings;
+    if (totalMeetingsEl) totalMeetingsEl.textContent = totalMeetings;
+    if (totalConnectionsEl) totalConnectionsEl.textContent = totalConnections;
+    if (todayMeetingsEl) todayMeetingsEl.textContent = todayMeetings;
     
     // Update count badges
-    meetingsCount.textContent = meetingsData.length;
-    connectionsCount.textContent = connectionsData.length;
+    if (meetingsCount) meetingsCount.textContent = meetingsData.length;
+    if (connectionsCount) connectionsCount.textContent = connectionsData.length;
 }
 
 // Render both tables
@@ -542,7 +586,10 @@ function renderTables() {
 
 // Render meetings table
 function renderMeetingsTable() {
-    console.log('Rendering meetings table with data:', meetingsData);
+    
+    if (!meetingsTableBody || !meetingsEmptyState) {
+        return;
+    }
     
     if (meetingsData.length === 0) {
         meetingsTableBody.innerHTML = '';
@@ -555,10 +602,6 @@ function renderMeetingsTable() {
         // Validate and clean data
         const cleanItem = validateAndCleanMeetingData(item);
         
-        console.log('Rendering meeting item:', cleanItem);
-        console.log('Name:', cleanItem.name);
-        console.log('Meeting Time:', cleanItem.meetingTime);
-        console.log('Contact Details:', cleanItem.contactDetails);
         
         return `
         <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
@@ -585,7 +628,6 @@ function renderMeetingsTable() {
 
 // Validate and clean meeting data
 function validateAndCleanMeetingData(item) {
-    console.log('Raw item data:', item);
     
     const cleaned = {
         id: item.id || 'unknown',
@@ -598,13 +640,15 @@ function validateAndCleanMeetingData(item) {
         originalData: item // Keep original for detailed view
     };
     
-    console.log('Cleaned item data:', cleaned);
     return cleaned;
 }
 
 // Render connections table
 function renderConnectionsTable() {
-    console.log('Rendering connections table with data:', connectionsData);
+    
+    if (!connectionsTableBody || !connectionsEmptyState) {
+        return;
+    }
     
     if (connectionsData.length === 0) {
         connectionsTableBody.innerHTML = '';
@@ -617,7 +661,6 @@ function renderConnectionsTable() {
         // Validate and clean data
         const cleanItem = validateAndCleanConnectionData(item);
         
-        console.log('Rendering connection item:', cleanItem);
         
         return `
         <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
@@ -663,7 +706,6 @@ function validateAndCleanConnectionData(item) {
 
 // Get contact details display - properly extract contact information
 function getContactDetailsDisplay(item) {
-    console.log('Getting contact details for item:', item);
     
     // The info field should contain the actual contact details (email, phone, username, etc.)
     if (item.info && item.info.trim()) {
@@ -674,7 +716,6 @@ function getContactDetailsDisplay(item) {
         
         // If info field contains ONLY a date pattern, don't use it for contact details
         if (datePattern.test(info) && info.match(datePattern)[0] === info) {
-            console.log('Info field contains only date pattern, not using for contact details');
             return 'Contact details not provided';
         }
         
@@ -682,13 +723,11 @@ function getContactDetailsDisplay(item) {
         if (datePattern.test(info)) {
             const nonDatePart = info.replace(datePattern, '').trim();
             if (nonDatePart) {
-                console.log('Using non-date part of info field:', nonDatePart);
                 return nonDatePart;
             }
         }
         
         // Use the info field as contact details
-        console.log('Using info field for contact details:', info);
         return info;
     }
     
@@ -699,12 +738,10 @@ function getContactDetailsDisplay(item) {
         // Don't use comments if they contain date patterns
         const datePattern = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4},?\s+\d{1,2}:\d{2}\s+(AM|PM)/i;
         if (!datePattern.test(comments)) {
-            console.log('Using comments field as contact details:', comments);
             return comments;
         }
     }
     
-    console.log('No contact details found');
     return 'Contact details not provided';
 }
 
@@ -732,7 +769,6 @@ function getActualMeetingTime(item) {
                 return date.getTime();
             }
         } catch (error) {
-            console.error('Error parsing timeSlot:', error, 'for timeSlot:', item.timeSlot);
         }
     }
     
@@ -765,11 +801,9 @@ function getActualMeetingTime(item) {
 
 // Get meeting time display - properly extract and format meeting times
 function getMeetingTimeDisplay(item) {
-    console.log('Getting meeting time for item:', item);
     
     // First priority: timeSlot field (this is the proper field for meeting times)
     if (item.timeSlot && item.timeSlot.trim() && item.timeSlot !== 'N/A' && item.timeSlot !== '') {
-        console.log('Using timeSlot field:', item.timeSlot);
         return formatMeetingTime(item.timeSlot);
     }
     
@@ -778,7 +812,6 @@ function getMeetingTimeDisplay(item) {
         const datePattern = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4},?\s+\d{1,2}:\d{2}\s+(AM|PM)/i;
         const dateMatch = item.info.match(datePattern);
         if (dateMatch) {
-            console.log('Found formatted date in info field:', dateMatch[0]);
             return dateMatch[0];
         }
     }
@@ -788,18 +821,15 @@ function getMeetingTimeDisplay(item) {
         const datePattern = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4},?\s+\d{1,2}:\d{2}\s+(AM|PM)/i;
         const dateMatch = item.comments.match(datePattern);
         if (dateMatch) {
-            console.log('Found formatted date in comments field:', dateMatch[0]);
             return dateMatch[0];
         }
     }
     
     // Fallback: Use timestamp if no meeting time is found
     if (item.timestamp) {
-        console.log('Using timestamp as fallback:', item.timestamp);
         return formatDate(item.timestamp);
     }
     
-    console.log('No meeting time found');
     return 'Not scheduled';
 }
 
@@ -849,7 +879,6 @@ function formatMeetingTime(timeSlot) {
         // If all else fails, return the raw value
         return timeSlot;
     } catch (error) {
-        console.error('Error formatting meeting time:', error, 'for timeSlot:', timeSlot);
         return timeSlot || 'Invalid time';
     }
 }
@@ -861,7 +890,6 @@ function formatDate(timestamp) {
     try {
         const date = new Date(timestamp);
         if (isNaN(date.getTime())) {
-            console.error('Invalid timestamp:', timestamp);
             return 'Invalid date';
         }
         
@@ -873,7 +901,6 @@ function formatDate(timestamp) {
             minute: '2-digit'
         });
     } catch (error) {
-        console.error('Error formatting date:', error, 'for timestamp:', timestamp);
         return 'Invalid date';
     }
 }
@@ -919,25 +946,20 @@ function getCommunicationIcon(communication) {
 
 // Setup event delegation for table clicks
 function setupTableClickDelegation() {
-    console.log('Setting up table click delegation');
     
     // Add click listener to document to catch clicks on dynamically added rows
     document.addEventListener('click', (e) => {
-        console.log('Click detected on:', e.target);
         
         // Check if clicked element is a clickable row or inside one
         const clickableRow = e.target.closest('.clickable-row');
         if (clickableRow) {
-            console.log('Clickable row found:', clickableRow);
             
             const id = clickableRow.getAttribute('data-id');
             const type = clickableRow.getAttribute('data-type');
-            console.log('Row data - ID:', id, 'Type:', type);
             
             if (id && type) {
                 showDetailedView(id, type);
             } else {
-                console.log('Missing ID or type data');
             }
         }
     });
@@ -945,11 +967,8 @@ function setupTableClickDelegation() {
 
 // Show detailed view popup
 function showDetailedView(id, type) {
-    console.log('showDetailedView called with:', id, type);
     const item = allData.find(item => item.id === id);
-    console.log('Found item:', item);
     if (!item) {
-        console.log('Item not found!');
         return;
     }
     
@@ -1126,7 +1145,6 @@ async function deleteItem(id) {
         showSuccess('Submission deleted successfully');
         
     } catch (error) {
-        console.error('Error deleting item:', error);
         showError('Failed to delete submission. Please try again.');
     }
 }
@@ -1216,10 +1234,14 @@ function downloadCSV(content, filename) {
 
 // Show/hide loading state
 function showLoading(show) {
+    if (!loadingState) {
+        return;
+    }
+    
     loadingState.style.display = show ? 'block' : 'none';
     if (show) {
-        meetingsEmptyState.style.display = 'none';
-        connectionsEmptyState.style.display = 'none';
+        if (meetingsEmptyState) meetingsEmptyState.style.display = 'none';
+        if (connectionsEmptyState) connectionsEmptyState.style.display = 'none';
     }
 }
 
@@ -1325,25 +1347,27 @@ function setupModal() {
     const aboutModal = document.getElementById('aboutModal');
     const closeModal = document.getElementById('closeModal');
 
-    hamburgerMenu.addEventListener('click', () => {
-        hamburgerMenu.classList.toggle('active');
-        aboutModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    });
+    if (hamburgerMenu && aboutModal && closeModal) {
+        hamburgerMenu.addEventListener('click', () => {
+            hamburgerMenu.classList.toggle('active');
+            aboutModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
 
-    closeModal.addEventListener('click', () => {
-        hamburgerMenu.classList.remove('active');
-        aboutModal.classList.remove('active');
-        document.body.style.overflow = '';
-    });
-
-    aboutModal.addEventListener('click', (e) => {
-        if (e.target === aboutModal) {
+        closeModal.addEventListener('click', () => {
             hamburgerMenu.classList.remove('active');
             aboutModal.classList.remove('active');
             document.body.style.overflow = '';
-        }
-    });
+        });
+
+        aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) {
+                hamburgerMenu.classList.remove('active');
+                aboutModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
 }
 
 

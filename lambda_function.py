@@ -26,7 +26,9 @@ ALLOWED_ORIGINS = [
     'https://main.dbovg7p76124l.amplifyapp.com',
     'https://tesconnections.com',
     'http://localhost:5500',
-    'http://127.0.0.1:5500'
+    'http://localhost:8080',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:8080'
 ]
 
 # Cognito configuration
