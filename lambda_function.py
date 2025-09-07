@@ -373,6 +373,30 @@ def lambda_handler(event, context):
             'body': json.dumps({'message': 'CORS preflight successful'})
         }
     
+    # Handle availability check requests (public endpoint - no auth required)
+    if event['httpMethod'] == 'GET' and '/availability' in event.get('path', ''):
+        try:
+            submissions = get_admin_data()
+            # Extract only time slots for public availability check
+            booked_slots = [submission.get('timeSlot') for submission in submissions if submission.get('timeSlot')]
+            return {
+                'statusCode': 200,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'bookedSlots': booked_slots,
+                    'count': len(booked_slots)
+                })
+            }
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'error': 'Failed to retrieve availability data',
+                    'message': str(e)
+                })
+            }
+    
     # Validate admin access for protected endpoints
     admin_access_valid, admin_error = validate_admin_access(event)
     if not admin_access_valid:
@@ -436,14 +460,6 @@ def lambda_handler(event, context):
                     'message': 'Authentication failed'
                 })
             }
-    
-    # Handle OPTIONS requests for CORS preflight
-    if event['httpMethod'] == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': cors_headers,
-            'body': ''
-        }
     
     # Handle admin data requests
     if event['httpMethod'] == 'GET' and '/admin-data' in event.get('path', ''):

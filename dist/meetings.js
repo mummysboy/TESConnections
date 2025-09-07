@@ -840,24 +840,24 @@ function forceInputStyling() {
 // Load booked slots from API
 async function loadBookedSlots() {
     try {
-        const response = await fetch('https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/admin-data', {
+        const response = await fetch('https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/availability', {
             method: 'GET',
             headers: {
-                'Origin': 'http://127.0.0.1:5500'
+                'Origin': window.location.origin
             }
         });
         
         if (response.ok) {
             const data = await response.json();
-            const submissions = data.submissions || [];
+            const bookedSlots = data.bookedSlots || [];
             
             // Clear existing booked slots
             calendarData.bookedSlots.clear();
             
             // Add actual booked slots from database
-            submissions.forEach(submission => {
-                if (submission.timeSlot) {
-                    calendarData.bookedSlots.add(submission.timeSlot);
+            bookedSlots.forEach(slotId => {
+                if (slotId) {
+                    calendarData.bookedSlots.add(slotId);
                 }
             });
             
