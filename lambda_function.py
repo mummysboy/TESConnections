@@ -437,6 +437,14 @@ def lambda_handler(event, context):
                 })
             }
     
+    # Handle OPTIONS requests for CORS preflight
+    if event['httpMethod'] == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': cors_headers,
+            'body': ''
+        }
+    
     # Handle admin data requests
     if event['httpMethod'] == 'GET' and '/admin-data' in event.get('path', ''):
         try:

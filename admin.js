@@ -69,15 +69,11 @@ function initializeCognito() {
             ClientId: COGNITO_CONFIG.userPoolClientId
         });
         
-        userPoolClient = new AmazonCognitoIdentity.CognitoUserPoolClient({
-            UserPoolId: COGNITO_CONFIG.userPoolId,
-            ClientId: COGNITO_CONFIG.userPoolClientId
-        });
-        
         console.log('Cognito initialized successfully');
     } catch (error) {
         console.error('Error initializing Cognito:', error);
-        showError('Authentication system initialization failed');
+        // Don't show error for Cognito initialization failure
+        // PIN authentication will still work
     }
 }
 
