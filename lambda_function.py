@@ -297,21 +297,25 @@ def get_cors_headers(origin):
     """
     Get CORS headers based on origin
     """
-    if origin in ALLOWED_ORIGINS:
-        return {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-            'Access-Control-Max-Age': '86400'
-        }
-    else:
-        return {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': 'null',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
-        }
+    # Default CORS headers that work for most cases
+    default_headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',  # Allow all origins for now
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Max-Age': '86400'
+    }
+    
+    # If we have a specific origin and it's in our allowed list, use it
+    if origin and origin in ALLOWED_ORIGINS:
+        default_headers['Access-Control-Allow-Origin'] = origin
+        return default_headers
+    
+    # For debugging, log the origin
+    print(f"CORS: Origin '{origin}' not in allowed list: {ALLOWED_ORIGINS}")
+    
+    # Return permissive headers for debugging
+    return default_headers
 
 def get_admin_data():
     """
@@ -370,9 +374,22 @@ def lambda_handler(event, context):
     Enhanced with security measures and Cognito authentication
     """
     
-    # Get origin for CORS (handle different header casings)
+    # Get origin for CORS (handle different header casings and cases)
     headers_in = event.get('headers', {}) or {}
-    origin = headers_in.get('origin') or headers_in.get('Origin') or ''
+    origin = (headers_in.get('origin') or 
+              headers_in.get('Origin') or 
+              headers_in.get('ORIGIN') or 
+              headers_in.get('referer') or 
+              headers_in.get('Referer') or 
+              headers_in.get('REFERER') or '')
+    
+    # Extract origin from referer if needed
+    if origin.startswith('http'):
+        from urllib.parse import urlparse
+        parsed = urlparse(origin)
+        origin = f"{parsed.scheme}://{parsed.netloc}"
+    
+    print(f"Request origin: '{origin}'")
     cors_headers = get_cors_headers(origin)
     
     # Handle preflight OPTIONS request
@@ -421,6 +438,7 @@ def lambda_handler(event, context):
     
     # Handle PIN authentication requests
     if event['httpMethod'] == 'POST' and '/pin-auth' in event.get('path', ''):
+        print(f"PIN auth request - Origin: {origin}, Headers: {cors_headers}")
         try:
             if isinstance(event['body'], str):
                 body = json.loads(event['body'])
@@ -428,6 +446,8 @@ def lambda_handler(event, context):
                 body = event['body']
             
             pin = body.get('pin')
+            print(f"PIN auth attempt with PIN: {pin[:2]}**")
+            
             if not pin:
                 return {
                     'statusCode': 400,
@@ -442,6 +462,7 @@ def lambda_handler(event, context):
             is_valid, result = authenticate_pin(pin)
             
             if is_valid:
+                print("PIN authentication successful")
                 return {
                     'statusCode': 200,
                     'headers': cors_headers,
@@ -452,6 +473,7 @@ def lambda_handler(event, context):
                     })
                 }
             else:
+                print(f"PIN authentication failed: {result}")
                 return {
                     'statusCode': 401,
                     'headers': cors_headers,
@@ -462,6 +484,7 @@ def lambda_handler(event, context):
                 }
                 
         except Exception as e:
+            print(f"PIN auth error: {str(e)}")
             return {
                 'statusCode': 500,
                 'headers': cors_headers,
