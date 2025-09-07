@@ -64,10 +64,20 @@ function initializeDOMElements() {
     exportConnections = document.getElementById('exportConnections');
 }
 
+// Detect local development environment
+const IS_LOCAL = (typeof window !== 'undefined') && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+
 // Initialize admin dashboard
 document.addEventListener('DOMContentLoaded', () => {
     initializeDOMElements();
-    checkAuthentication();
+    // In local dev, bypass login to make the admin page usable
+    if (IS_LOCAL) {
+        isAuthenticated = true;
+        authToken = 'dev-local';
+        showAdminDashboard();
+    } else {
+        checkAuthentication();
+    }
     setupEventListeners();
     setupModal();
 });
