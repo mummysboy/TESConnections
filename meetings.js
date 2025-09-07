@@ -191,8 +191,13 @@ slotElement.dataset.slotId = slot.id;
 if (slot.booked) {
     slotElement.classList.add('booked');
 }
+// Split time into hours and minutes for better mobile display
+const [hours, minutes] = slot.time.split(':');
 slotElement.innerHTML = `
-    <div class="time-slot-time">${slot.time}</div>
+    <div class="time-slot-time">
+        <div class="time-hours">${hours}</div>
+        <div class="time-minutes">${minutes}</div>
+    </div>
 `;
     if (!slot.booked) {
         const handleTimeSlotSelection = (e) => {
@@ -557,6 +562,20 @@ form.style.animation = 'shake 0.5s ease-in-out';
 setTimeout(() => {
     form.style.animation = '';
 }, 500);
+
+// Scroll to first error field
+setTimeout(() => {
+    const firstError = form.querySelector('.error-message:not([style*="display: none"])');
+    if (firstError) {
+        const fieldName = firstError.id.replace('Error', '');
+        const field = document.getElementById(fieldName);
+        if (field) {
+            field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            field.focus();
+        }
+    }
+}, 100);
+
 return;
     }
     
@@ -623,11 +642,7 @@ setLoadingState(false);
     }
 });
 
-// Real-time validation with smooth animations
-nameField.addEventListener('blur', () => {
-    validateField('name', nameField.value);
-});
-
+// Input formatting only (no validation)
 nameField.addEventListener('input', () => {
     // Capitalize first letter of each word
     if (nameField.value.length > 0) {
@@ -643,26 +658,6 @@ if (nameField.value !== capitalizedText) {
     nameField.value = capitalizedText;
 }
     }
-    
-    if (nameError.textContent) {
-validateField('name', nameField.value);
-    }
-});
-
-infoField.addEventListener('blur', () => {
-    validateField('info', infoField.value);
-});
-
-infoField.addEventListener('input', () => {
-    if (infoField.value.length > validationRules.info.maxLength) {
-showError('info', validationRules.info.message);
-    } else {
-clearError('info');
-    }
-});
-
-commentsField.addEventListener('blur', () => {
-    validateField('comments', commentsField.value);
 });
 
 commentsField.addEventListener('input', () => {
@@ -674,12 +669,6 @@ const capitalizedText = firstChar.toUpperCase() + restOfText;
 if (commentsField.value !== capitalizedText) {
     commentsField.value = capitalizedText;
 }
-    }
-    
-    if (commentsField.value.length > validationRules.comments.maxLength) {
-showError('comments', validationRules.comments.message);
-    } else {
-clearError('comments');
     }
 });
 
@@ -775,20 +764,6 @@ if (focusedCard.classList.contains('option-card')) {
     }
 });
 
-// Focus management with smooth transitions
-form.addEventListener('submit', () => {
-    setTimeout(() => {
-const firstError = form.querySelector('.error-message:not([style*="display: none"])');
-if (firstError) {
-    const fieldName = firstError.id.replace('Error', '');
-    const field = document.getElementById(fieldName);
-    if (field) {
-field.focus();
-field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-    }, 100);
-});
 
 // Force input styling to stay black with white text
 function forceInputStyling() {

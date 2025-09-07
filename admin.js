@@ -963,32 +963,72 @@ function renderConnectionsTable() {
         // Validate and clean data
         const cleanItem = validateAndCleanConnectionData(item);
         
-        return `
-        <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
-            <td class="name-cell">${cleanItem.name}</td>
-            <td class="contact-info-cell">
-                <div class="contact-method">
-                    <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
-                    ${cleanItem.communication}
-                </div>
-                <div class="contact-details">${cleanItem.contactDetails}</div>
-            </td>
-            <td class="meeting-time">${cleanItem.submittedDate}</td>
-            <td class="meeting-actions">
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'connection')" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="action-btn edit-btn" onclick="event.stopPropagation(); editConnection('${cleanItem.id}')" title="Edit Connection">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Connection">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `;
+        // Check if mobile device
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            // Mobile layout - show only essential info
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
+                <td class="name-cell">
+                    <div class="mobile-connection-info">
+                        <div class="name">${cleanItem.name}</div>
+                        <div class="mobile-contact-info">
+                            <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
+                            ${cleanItem.communication}: ${cleanItem.contactDetails}
+                        </div>
+                        <div class="mobile-submitted-date">Submitted: ${cleanItem.submittedDate}</div>
+                    </div>
+                </td>
+                <td class="contact-info-cell mobile-hide">
+                    <div class="contact-method">
+                        <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
+                        ${cleanItem.communication}
+                    </div>
+                    <div class="contact-details">${cleanItem.contactDetails}</div>
+                </td>
+                <td class="meeting-time mobile-hide">${cleanItem.submittedDate}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn-small view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'connection')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn-small delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Connection">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        } else {
+            // Desktop layout - show all columns
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
+                <td class="name-cell">${cleanItem.name}</td>
+                <td class="contact-info-cell">
+                    <div class="contact-method">
+                        <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
+                        ${cleanItem.communication}
+                    </div>
+                    <div class="contact-details">${cleanItem.contactDetails}</div>
+                </td>
+                <td class="meeting-time">${cleanItem.submittedDate}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'connection')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" onclick="event.stopPropagation(); editConnection('${cleanItem.id}')" title="Edit Connection">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Connection">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        }
     }).join('');
 }
 

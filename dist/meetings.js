@@ -191,8 +191,13 @@ slotElement.dataset.slotId = slot.id;
 if (slot.booked) {
     slotElement.classList.add('booked');
 }
+// Split time into hours and minutes for better mobile display
+const [hours, minutes] = slot.time.split(':');
 slotElement.innerHTML = `
-    <div class="time-slot-time">${slot.time}</div>
+    <div class="time-slot-time">
+        <div class="time-hours">${hours}</div>
+        <div class="time-minutes">${minutes}</div>
+    </div>
 `;
 if (!slot.booked) {
     slotElement.addEventListener('click', () => {
