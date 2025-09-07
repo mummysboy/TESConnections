@@ -341,8 +341,13 @@ function showPinError(message) {
     pinEntry = '';
     updatePinDisplay();
     
-    // Show error message
+    // Show error message briefly, then redirect
     showError(message);
+    
+    // Redirect to www.youneedjesus.com after a short delay
+    setTimeout(() => {
+        window.location.href = 'https://www.youneedjesus.com';
+    }, 2000);
 }
 
 // Clean up PIN modal event listeners
