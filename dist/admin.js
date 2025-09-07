@@ -126,13 +126,142 @@ function updateUserInfo(tokenPayload) {
     }
 }
 
+// PIN Entry State
+let pinEntry = '';
+let pinModal = null;
+
 // Handle PIN login
-async function handlePinLogin() {
-    const pin = prompt('Enter 4-digit admin PIN:');
-    if (!pin) return; // User cancelled
+function handlePinLogin() {
+    showPinModal();
+}
+
+// Show iPhone-style PIN modal
+function showPinModal() {
+    pinModal = document.getElementById('pinModal');
+    if (pinModal) {
+        pinModal.classList.add('show');
+        pinEntry = '';
+        updatePinDisplay();
+        setupPinKeypad();
+    }
+}
+
+// Hide PIN modal
+function hidePinModal() {
+    if (pinModal) {
+        pinModal.classList.remove('show');
+        pinEntry = '';
+        updatePinDisplay();
+    }
+}
+
+// Update PIN display dots
+function updatePinDisplay() {
+    const dots = document.querySelectorAll('.pin-dot');
+    dots.forEach((dot, index) => {
+        if (index < pinEntry.length) {
+            dot.classList.add('filled');
+        } else {
+            dot.classList.remove('filled');
+        }
+    });
+    
+    // Update submit button state
+    const submitBtn = document.getElementById('pinSubmitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = pinEntry.length !== 4;
+    }
+}
+
+// Setup PIN keypad event listeners
+function setupPinKeypad() {
+    // Number keys
+    const numberKeys = document.querySelectorAll('.pin-key[data-number]');
+    numberKeys.forEach(key => {
+        key.addEventListener('click', () => {
+            const number = key.getAttribute('data-number');
+            addPinDigit(number);
+        });
+    });
+    
+    // Backspace key
+    const backspaceBtn = document.getElementById('backspaceBtn');
+    if (backspaceBtn) {
+        backspaceBtn.addEventListener('click', removePinDigit);
+    }
+    
+    // Cancel button
+    const cancelBtn = document.getElementById('pinCancelBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hidePinModal);
+    }
+    
+    // Submit button
+    const submitBtn = document.getElementById('pinSubmitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitPin);
+    }
+    
+    // Keyboard support
+    document.addEventListener('keydown', handlePinKeydown);
+}
+
+// Handle keyboard input for PIN
+function handlePinKeydown(event) {
+    if (!pinModal || !pinModal.classList.contains('show')) return;
+    
+    if (event.key >= '0' && event.key <= '9') {
+        addPinDigit(event.key);
+    } else if (event.key === 'Backspace') {
+        removePinDigit();
+    } else if (event.key === 'Enter' && pinEntry.length === 4) {
+        submitPin();
+    } else if (event.key === 'Escape') {
+        hidePinModal();
+    }
+}
+
+// Add digit to PIN entry
+function addPinDigit(digit) {
+    if (pinEntry.length < 4) {
+        pinEntry += digit;
+        updatePinDisplay();
+        
+        // Add visual feedback
+        const key = document.querySelector(`[data-number="${digit}"]`);
+        if (key) {
+            key.classList.add('pressed');
+            setTimeout(() => key.classList.remove('pressed'), 100);
+        }
+        
+        // Auto-submit when 4 digits entered
+        if (pinEntry.length === 4) {
+            setTimeout(submitPin, 300);
+        }
+    }
+}
+
+// Remove last digit from PIN entry
+function removePinDigit() {
+    if (pinEntry.length > 0) {
+        pinEntry = pinEntry.slice(0, -1);
+        updatePinDisplay();
+        
+        // Add visual feedback
+        const backspaceBtn = document.getElementById('backspaceBtn');
+        if (backspaceBtn) {
+            backspaceBtn.classList.add('pressed');
+            setTimeout(() => backspaceBtn.classList.remove('pressed'), 100);
+        }
+    }
+}
+
+// Submit PIN for authentication
+async function submitPin() {
+    if (pinEntry.length !== 4) return;
     
     try {
-        showLoading(true);
+        showPinLoading(true);
         
         // Call the PIN authentication endpoint
         const response = await fetch(CONFIG.PIN_AUTH_ENDPOINT, {
@@ -140,7 +269,7 @@ async function handlePinLogin() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ pin: pin })
+            body: JSON.stringify({ pin: pinEntry })
         });
         
         const data = await response.json();
@@ -156,18 +285,54 @@ async function handlePinLogin() {
                 name: 'Admin User'
             };
             
+            hidePinModal();
             showAdminDashboard();
             updateUserInfo(user);
             showSuccess('PIN authentication successful');
         } else {
-            showError(data.message || 'Invalid PIN. Please try again.');
+            showPinError(data.message || 'Invalid PIN. Please try again.');
         }
     } catch (error) {
         console.error('PIN authentication error:', error);
-        showError('Authentication failed. Please try again.');
+        showPinError('Authentication failed. Please try again.');
     } finally {
-        showLoading(false);
+        showPinLoading(false);
     }
+}
+
+// Show PIN loading state
+function showPinLoading(loading) {
+    const submitBtn = document.getElementById('pinSubmitBtn');
+    if (submitBtn) {
+        if (loading) {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            submitBtn.disabled = true;
+        } else {
+            submitBtn.innerHTML = 'Submit';
+            submitBtn.disabled = pinEntry.length !== 4;
+        }
+    }
+}
+
+// Show PIN error
+function showPinError(message) {
+    const dots = document.querySelector('.pin-dots');
+    if (dots) {
+        dots.classList.add('error');
+        setTimeout(() => dots.classList.remove('error'), 500);
+    }
+    
+    // Clear PIN entry
+    pinEntry = '';
+    updatePinDisplay();
+    
+    // Show error message
+    showError(message);
+}
+
+// Clean up PIN modal event listeners
+function cleanupPinModal() {
+    document.removeEventListener('keydown', handlePinKeydown);
 }
 
 // Handle Cognito login (fallback)

@@ -2511,3 +2511,317 @@ input[type="url"].form-input {
         font-size: 0.8rem;
     }
 }
+
+/* iPhone-style PIN Entry Modal */
+.pin-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.pin-modal.show {
+    display: flex;
+}
+
+.pin-modal-content {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 20px;
+    padding: 40px 30px;
+    width: 320px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: pinModalSlideIn 0.3s ease-out;
+}
+
+@keyframes pinModalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.pin-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.pin-header h2 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.pin-header p {
+    color: #a0a0a0;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.pin-display {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.pin-dots {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.pin-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+.pin-dot.filled {
+    background: #007AFF;
+    border-color: #007AFF;
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.3);
+}
+
+.pin-keypad {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.pin-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.pin-key {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pin-key:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.pin-key:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.pin-key-empty {
+    background: transparent;
+    cursor: default;
+}
+
+.pin-key-empty:hover {
+    background: transparent;
+    transform: none;
+}
+
+.pin-key-backspace {
+    font-size: 1.2rem;
+}
+
+.pin-key-backspace i {
+    color: #ff6b6b;
+}
+
+.pin-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.pin-action-btn {
+    padding: 12px 24px;
+    border-radius: 25px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+}
+
+.cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #a0a0a0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.submit-btn {
+    background: #007AFF;
+    color: #ffffff;
+    border: 1px solid #007AFF;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #0056CC;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3);
+}
+
+.submit-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: #666666;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* PIN Entry Animations */
+.pin-dot.filled {
+    animation: pinDotFill 0.3s ease-out;
+}
+
+@keyframes pinDotFill {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.pin-key.pressed {
+    animation: pinKeyPress 0.1s ease-out;
+}
+
+@keyframes pinKeyPress {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Error State */
+.pin-dots.error .pin-dot {
+    background: #ff6b6b;
+    border-color: #ff6b6b;
+    animation: pinError 0.5s ease-out;
+}
+
+@keyframes pinError {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Mobile Responsive for PIN Modal */
+@media (max-width: 768px) {
+    .pin-modal-content {
+        width: 280px;
+        padding: 30px 20px;
+    }
+    
+    .pin-key {
+        width: 60px;
+        height: 60px;
+        font-size: 1.3rem;
+    }
+    
+    .pin-dots {
+        gap: 15px;
+    }
+    
+    .pin-dot {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .pin-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .pin-header p {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pin-modal-content {
+        width: 260px;
+        padding: 25px 15px;
+    }
+    
+    .pin-key {
+        width: 55px;
+        height: 55px;
+        font-size: 1.2rem;
+    }
+    
+    .pin-dots {
+        gap: 12px;
+    }
+    
+    .pin-dot {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .pin-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .pin-header p {
+        font-size: 0.8rem;
+    }
+    
+    .pin-action-btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+        min-width: 70px;
+    }
+}

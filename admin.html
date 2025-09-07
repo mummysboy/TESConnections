@@ -22,15 +22,64 @@
                 <p class="login-subtitle">Please sign in to access the admin panel</p>
             </div>
             
-            <div class="login-form">
-                <button id="pinLoginBtn" class="login-btn pin-login-btn">
-                    <i class="fas fa-key"></i>
-                    Sign In with PIN
-                </button>
-                <button id="cognitoLoginBtn" class="login-btn cognito-login-btn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Sign In with Cognito
-                </button>
+        <div class="login-form">
+            <button id="pinLoginBtn" class="login-btn pin-login-btn">
+                <i class="fas fa-key"></i>
+                Sign In with PIN
+            </button>
+            <button id="cognitoLoginBtn" class="login-btn cognito-login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In with Cognito
+            </button>
+        </div>
+        
+        <!-- iPhone-style PIN Entry Modal -->
+        <div id="pinModal" class="pin-modal">
+            <div class="pin-modal-content">
+                <div class="pin-header">
+                    <h2>Enter Admin PIN</h2>
+                    <p>Enter your 4-digit PIN to access the admin dashboard</p>
+                </div>
+                
+                <div class="pin-display">
+                    <div class="pin-dots">
+                        <div class="pin-dot" id="dot1"></div>
+                        <div class="pin-dot" id="dot2"></div>
+                        <div class="pin-dot" id="dot3"></div>
+                        <div class="pin-dot" id="dot4"></div>
+                    </div>
+                </div>
+                
+                <div class="pin-keypad">
+                    <div class="pin-row">
+                        <button class="pin-key" data-number="1">1</button>
+                        <button class="pin-key" data-number="2">2</button>
+                        <button class="pin-key" data-number="3">3</button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key" data-number="4">4</button>
+                        <button class="pin-key" data-number="5">5</button>
+                        <button class="pin-key" data-number="6">6</button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key" data-number="7">7</button>
+                        <button class="pin-key" data-number="8">8</button>
+                        <button class="pin-key" data-number="9">9</button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key pin-key-empty"></button>
+                        <button class="pin-key" data-number="0">0</button>
+                        <button class="pin-key pin-key-backspace" id="backspaceBtn">
+                            <i class="fas fa-backspace"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="pin-actions">
+                    <button id="pinCancelBtn" class="pin-action-btn cancel-btn">Cancel</button>
+                    <button id="pinSubmitBtn" class="pin-action-btn submit-btn" disabled>Submit</button>
+                </div>
+            </div>
         </div>
     </div>
 
