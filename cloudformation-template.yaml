@@ -50,11 +50,13 @@ Resources:
       CallbackURLs:
         - !Sub 'https://${WebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com/admin.html'
         - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/admin.html'
+        - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/'
         - !Sub 'https://tesconnections.com/admin.html'
         - 'http://localhost:5500/admin.html'
       LogoutURLs:
         - !Sub 'https://${WebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com/admin.html'
         - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/admin.html'
+        - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/'
         - !Sub 'https://tesconnections.com/admin.html'
         - 'http://localhost:5500/admin.html'
       AllowedOAuthFlows:
