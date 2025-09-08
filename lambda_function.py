@@ -268,6 +268,76 @@ def validate_communication(method):
     valid_methods = ['telegram', 'email', 'teams', 'whatsapp']
     return method in valid_methods, "Invalid communication method"
 
+def validate_time_slot(time_slot):
+    """
+    Validate that timeSlot is within allowed dates
+    """
+    if not time_slot:
+        return True, ""  # timeSlot is optional
+    
+    try:
+        # Parse the custom format "YYYY-MM-DD-HH:MM"
+        if '-' in time_slot and ':' in time_slot:
+            parts = time_slot.split('-')
+            if len(parts) >= 4:
+                year, month, day, time = parts[0], parts[1], parts[2], parts[3]
+                booking_date = datetime(int(year), int(month), int(day))
+                
+                # Check if date is in allowed range (September 12-15, 2025)
+                allowed_dates = [
+                    datetime(2025, 9, 12),
+                    datetime(2025, 9, 13), 
+                    datetime(2025, 9, 14),
+                    datetime(2025, 9, 15)
+                ]
+                
+                if booking_date not in allowed_dates:
+                    return False, "Booking date not available. Only September 12-15, 2025 are available."
+                    
+                # Validate time format
+                if ':' in time:
+                    hour, minute = time.split(':')
+                    hour_int = int(hour)
+                    minute_int = int(minute)
+                    
+                    # Check if time is within business hours (9 AM - 5 PM)
+                    if hour_int < 9 or hour_int >= 17:
+                        return False, "Booking time must be between 9:00 AM and 5:00 PM"
+                    
+                    # Check if minute is valid (15-minute intervals)
+                    if minute_int not in [0, 15, 30, 45]:
+                        return False, "Booking time must be in 15-minute intervals"
+                        
+        return True, ""
+    except Exception as e:
+        return False, "Invalid time slot format"
+
+def check_time_slot_availability(time_slot):
+    """
+    Check if a time slot is already booked
+    """
+    if not time_slot:
+        return True, ""  # No time slot means no conflict
+    
+    try:
+        # Query DynamoDB to check if this time slot is already booked
+        response = table.scan(
+            FilterExpression='timeSlot = :time_slot',
+            ExpressionAttributeValues={
+                ':time_slot': time_slot
+            }
+        )
+        
+        # If any items are found, the time slot is already booked
+        if response.get('Items'):
+            return False, f"Time slot {time_slot} is already booked. Please choose a different time."
+        
+        return True, ""
+    except Exception as e:
+        # If we can't check availability, allow the booking but log the error
+        print(f"Error checking time slot availability: {str(e)}")
+        return True, ""
+
 def get_client_ip(event):
     """
     Extract client IP address from event
@@ -675,6 +745,32 @@ def lambda_handler(event, context):
                     'message': comm_error
                 })
             }
+        
+        # Security: Validate time slot if provided
+        time_slot = body.get('timeSlot')
+        if time_slot:
+            time_slot_valid, time_slot_error = validate_time_slot(time_slot)
+            if not time_slot_valid:
+                return {
+                    'statusCode': 400,
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'error': 'Invalid time slot',
+                        'message': time_slot_error
+                    })
+                }
+            
+            # Check if time slot is already booked
+            slot_available, availability_error = check_time_slot_availability(time_slot)
+            if not slot_available:
+                return {
+                    'statusCode': 409,  # Conflict status code
+                    'headers': cors_headers,
+                    'body': json.dumps({
+                        'error': 'Time slot unavailable',
+                        'message': availability_error
+                    })
+                }
         
         # Security: Sanitize all text inputs
         sanitized_name = sanitize_input(body['name'], 100)
