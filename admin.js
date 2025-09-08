@@ -1729,7 +1729,7 @@ window.testAdminAPI = async function() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ pin: '1234' }),
+            body: JSON.stringify({ pin: '1954' }),
             mode: 'cors'
         });
         

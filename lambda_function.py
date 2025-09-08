@@ -24,11 +24,7 @@ RATE_LIMIT_WINDOW = 300  # 5 minutes
 MAX_REQUESTS_PER_WINDOW = 5  # Max 5 requests per 5 minutes
 ALLOWED_ORIGINS = [
     'https://main.dbovg7p76124l.amplifyapp.com',
-    'https://tesconnections.com',
-    'http://localhost:5500',
-    'http://localhost:8080',
-    'http://127.0.0.1:5500',
-    'http://127.0.0.1:8080'
+    'https://tesconnections.com'
 ]
 
 # Cognito configuration
@@ -36,8 +32,8 @@ COGNITO_USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID', '')
 COGNITO_REGION = os.environ.get('AWS_REGION', 'us-west-1')
 
 # PIN Authentication configuration
-ADMIN_PIN = os.environ.get('ADMIN_PIN', '1234')  # Set this in Lambda environment variables
-PIN_SESSION_SECRET = os.environ.get('PIN_SESSION_SECRET', 'your-secret-key-change-this')
+ADMIN_PIN = os.environ.get('ADMIN_PIN', '1954')  # Set this in Lambda environment variables
+PIN_SESSION_SECRET = os.environ.get('PIN_SESSION_SECRET', 'nhacN0t9q78INslG3r0eg6aa2URUQO2gIpxda4IZOmU=')
 PIN_SESSION_DURATION = 24 * 60 * 60  # 24 hours in seconds
 
 def get_cognito_public_keys():
@@ -155,18 +151,15 @@ def generate_pin_session_token():
         'jti': str(uuid.uuid4())  # Unique token ID
     }
     
-    print(f"Generating PIN session token with payload: {payload}")
     token = jwt.encode(payload, PIN_SESSION_SECRET, algorithm='HS256')
-    print(f"Generated token length: {len(token)}")
+    print(f"Generated PIN session token (length: {len(token)})")
     return token
 
 def authenticate_pin(pin):
     """
     Authenticate PIN and return session token
     """
-    print(f"Authenticating PIN: {pin[:2]}** (length: {len(pin)})")
-    print(f"Expected PIN: {ADMIN_PIN[:2]}** (length: {len(ADMIN_PIN)})")
-    print(f"PIN match: {pin == ADMIN_PIN}")
+    print(f"PIN authentication attempt (length: {len(pin)})")
     
     if pin == ADMIN_PIN:
         token = generate_pin_session_token()
@@ -387,10 +380,10 @@ def get_cors_headers(origin):
     """
     Get CORS headers based on origin
     """
-    # Default CORS headers that work for most cases
+    # Default CORS headers - restricted to allowed origins only
     default_headers = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',  # Allow all origins for now
+        'Access-Control-Allow-Origin': 'https://tesconnections.com',  # Default to main domain
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
         'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
         'Access-Control-Max-Age': '86400'
@@ -401,10 +394,10 @@ def get_cors_headers(origin):
         default_headers['Access-Control-Allow-Origin'] = origin
         return default_headers
     
-    # For debugging, log the origin
-    print(f"CORS: Origin '{origin}' not in allowed list: {ALLOWED_ORIGINS}")
+    # Log unauthorized origin attempt (without exposing allowed origins)
+    print(f"CORS: Unauthorized origin attempt: {origin}")
     
-    # Return permissive headers for debugging
+    # Return restricted headers for unauthorized origins
     return default_headers
 
 def get_admin_data():

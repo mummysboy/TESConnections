@@ -9,12 +9,12 @@ Parameters:
     Description: 'Environment name'
   AdminPin:
     Type: String
-    Default: '1234'
+    Default: '1954'
     Description: 'Admin PIN for PIN-based auth (override in secure envs)'
   PinSessionSecret:
     Type: String
     NoEcho: true
-    Default: 'replace-with-strong-secret'
+    Default: 'nhacN0t9q78INslG3r0eg6aa2URUQO2gIpxda4IZOmU='
     Description: 'Secret used to sign PIN session tokens'
 
 Resources:
