@@ -16,6 +16,11 @@ Parameters:
     NoEcho: true
     Default: 'nhacN0t9q78INslG3r0eg6aa2URUQO2gIpxda4IZOmU='
     Description: 'Secret used to sign PIN session tokens'
+  FormApiKey:
+    Type: String
+    NoEcho: true
+    Default: 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl'
+    Description: 'API key for form submissions'
 
 Resources:
   # Cognito User Pool for Admin Authentication
@@ -325,6 +330,7 @@ Resources:
           AWS_REGION: !Ref AWS::Region
           ADMIN_PIN: !Ref AdminPin
           PIN_SESSION_SECRET: !Ref PinSessionSecret
+          FORM_API_KEY: !Ref FormApiKey
       Timeout: 30
       MemorySize: 256
 

@@ -27,6 +27,9 @@ ALLOWED_ORIGINS = [
     'https://tesconnections.com'
 ]
 
+# API Key configuration
+FORM_API_KEY = os.environ.get('FORM_API_KEY', 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl')
+
 # Cognito configuration
 COGNITO_USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID', '')
 COGNITO_REGION = os.environ.get('AWS_REGION', 'us-west-1')
@@ -175,6 +178,21 @@ def is_admin_endpoint(path):
     """
     admin_paths = ['/admin-data', '/delete-submission']
     return any(path.endswith(admin_path) for admin_path in admin_paths)
+
+def validate_api_key(event):
+    """
+    Validate API key for form submission endpoints
+    """
+    headers = event.get('headers', {})
+    api_key = headers.get('X-API-Key') or headers.get('x-api-key')
+    
+    if not api_key:
+        return False, "API key required"
+    
+    if api_key != FORM_API_KEY:
+        return False, "Invalid API key"
+    
+    return True, None
 
 def validate_admin_access(event):
     """
@@ -669,6 +687,18 @@ def lambda_handler(event, context):
             }
     
     try:
+        # Security: Validate API key for form submissions
+        api_key_valid, api_key_error = validate_api_key(event)
+        if not api_key_valid:
+            return {
+                'statusCode': 401,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'error': 'Unauthorized',
+                    'message': api_key_error
+                })
+            }
+        
         # Security: Check request size
         request_size = len(str(event.get('body', '')))
         if request_size > MAX_REQUEST_SIZE:

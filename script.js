@@ -9,6 +9,8 @@
 const CONFIG = {
     // Working API Gateway URL
     API_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact',
+    // Secure API Key for form submissions
+    API_KEY: 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl',
     TIMEOUT: 10000, // 10 seconds
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000 // 1 second
@@ -261,6 +263,7 @@ const response = await fetch(CONFIG.API_ENDPOINT, {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
+        'X-API-Key': CONFIG.API_KEY
     },
     body: JSON.stringify(formData),
     signal: controller.signal,
