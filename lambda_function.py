@@ -106,12 +106,9 @@ def verify_pin_token(token):
     Verify PIN-based session token
     """
     try:
-        print(f"Verifying PIN token: {token[:20]}... (length: {len(token)})")
-        
         # Remove 'Bearer ' prefix if present
         if token.startswith('Bearer '):
             token = token[7:]
-            print(f"Removed Bearer prefix, token now: {token[:20]}...")
         
         # Decode the token
         decoded_token = jwt.decode(
@@ -121,24 +118,17 @@ def verify_pin_token(token):
             options={"verify_exp": True}
         )
         
-        print(f"Token decoded successfully: {decoded_token}")
-        
         # Check if token is still valid
         if decoded_token.get('type') != 'pin_session':
-            print(f"Invalid token type: {decoded_token.get('type')}")
             return False, "Invalid token type"
         
-        print("PIN token verification successful")
         return True, decoded_token
         
     except jwt.ExpiredSignatureError:
-        print("PIN session has expired")
         return False, "PIN session has expired"
     except jwt.InvalidTokenError as e:
-        print(f"Invalid PIN token: {str(e)}")
         return False, f"Invalid PIN token: {str(e)}"
     except Exception as e:
-        print(f"PIN token verification failed: {str(e)}")
         return False, "PIN token verification failed"
 
 def generate_pin_session_token():
@@ -155,21 +145,16 @@ def generate_pin_session_token():
     }
     
     token = jwt.encode(payload, PIN_SESSION_SECRET, algorithm='HS256')
-    print(f"Generated PIN session token (length: {len(token)})")
     return token
 
 def authenticate_pin(pin):
     """
     Authenticate PIN and return session token
     """
-    print(f"PIN authentication attempt (length: {len(pin)})")
-    
     if pin == ADMIN_PIN:
         token = generate_pin_session_token()
-        print(f"PIN authentication successful, generated token")
         return True, token
     else:
-        print(f"PIN authentication failed: Invalid PIN")
         return False, "Invalid PIN"
 
 def is_admin_endpoint(path):
@@ -320,8 +305,10 @@ def validate_time_slot(time_slot):
                         return False, "Booking time must be in 15-minute intervals"
                         
         return True, ""
+    except (ValueError, IndexError) as e:
+        return False, f"Invalid time slot format: {str(e)}"
     except Exception as e:
-        return False, "Invalid time slot format"
+        return False, f"Error validating time slot: {str(e)}"
 
 def check_time_slot_availability(time_slot):
     """
@@ -345,8 +332,7 @@ def check_time_slot_availability(time_slot):
         
         return True, ""
     except Exception as e:
-        # If we can't check availability, allow the booking but log the error
-        print(f"Error checking time slot availability: {str(e)}")
+        # If we can't check availability, allow the booking
         return True, ""
 
 def get_client_ip(event):
@@ -413,7 +399,6 @@ def get_cors_headers(origin):
         return default_headers
     
     # Log unauthorized origin attempt (without exposing allowed origins)
-    print(f"CORS: Unauthorized origin attempt: {origin}")
     
     # Return restricted headers for unauthorized origins
     return default_headers
@@ -423,11 +408,9 @@ def get_admin_data():
     Retrieve all form submissions for admin dashboard
     """
     try:
-        print("Scanning DynamoDB table for admin data...")
         # Scan DynamoDB table to get all items
         response = table.scan()
         items = response.get('Items', [])
-        print(f"Retrieved {len(items)} items from DynamoDB")
         
         # Process items to match admin dashboard format
         submissions = []
@@ -435,7 +418,6 @@ def get_admin_data():
             # Skip rate limit entries
             item_id = item.get('id', '')
             if item_id.startswith('rate_limit'):
-                print(f"Skipping rate limit entry: {item_id}")
                 continue
                 
             # Determine type based on whether it has a meeting time
@@ -453,18 +435,13 @@ def get_admin_data():
                 'type': submission_type
             }
             submissions.append(submission)
-            print(f"Processed submission: {item_id} ({submission_type})")
-        
-        print(f"Total submissions processed: {len(submissions)}")
         
         # Sort by creation date (newest first)
         submissions.sort(key=lambda x: x['timestamp'], reverse=True)
         
-        print(f"Returning {len(submissions)} submissions sorted by timestamp")
         return submissions
         
     except Exception as e:
-        print(f"Error retrieving admin data: {str(e)}")
         return []
 
 def delete_submission(submission_id):
@@ -498,7 +475,6 @@ def lambda_handler(event, context):
         parsed = urlparse(origin)
         origin = f"{parsed.scheme}://{parsed.netloc}"
     
-    print(f"Request origin: '{origin}'")
     cors_headers = get_cors_headers(origin)
     
     # Handle preflight OPTIONS request
@@ -547,7 +523,6 @@ def lambda_handler(event, context):
     
     # Handle PIN authentication requests
     if event['httpMethod'] == 'POST' and '/pin-auth' in event.get('path', ''):
-        print(f"PIN auth request - Origin: {origin}, Headers: {cors_headers}")
         try:
             if isinstance(event['body'], str):
                 body = json.loads(event['body'])
@@ -555,7 +530,6 @@ def lambda_handler(event, context):
                 body = event['body']
             
             pin = body.get('pin')
-            print(f"PIN auth attempt with PIN: {pin[:2]}**")
             
             if not pin:
                 return {
@@ -571,7 +545,6 @@ def lambda_handler(event, context):
             is_valid, result = authenticate_pin(pin)
             
             if is_valid:
-                print("PIN authentication successful")
                 return {
                     'statusCode': 200,
                     'headers': cors_headers,
@@ -582,7 +555,6 @@ def lambda_handler(event, context):
                     })
                 }
             else:
-                print(f"PIN authentication failed: {result}")
                 return {
                     'statusCode': 401,
                     'headers': cors_headers,
@@ -593,7 +565,6 @@ def lambda_handler(event, context):
                 }
                 
         except Exception as e:
-            print(f"PIN auth error: {str(e)}")
             return {
                 'statusCode': 500,
                 'headers': cors_headers,
@@ -872,5 +843,4 @@ async def send_notification(item):
     DISABLED: Notifications are currently turned off
     """
     # Notifications are disabled - no emails will be sent
-    print("Notification function called but disabled - no email sent")
     pass

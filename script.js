@@ -2,7 +2,7 @@
 // 
 // WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
 // 
-// NOTE: For localhost testing, CORS preflight requests may fail.
+// NOTE: CORS preflight requests may fail on localhost.
 // The form will work perfectly when deployed to a proper domain.
 //
 // Configuration - Update these with your actual AWS API Gateway endpoint
@@ -47,10 +47,6 @@ message: 'Please enter a valid name (2-100 characters)'
     communication: {
 required: true,
 message: 'Please select your preferred communication method'
-    },
-    info: {
-maxLength: 500,
-message: 'Additional information must be 500 characters or less'
     },
     comments: {
 maxLength: 1000,
@@ -174,10 +170,9 @@ function validateForm() {
     // Validate all fields
     const nameValid = validateField('name', nameField.value);
     const communicationValid = validateField('communication', communicationField.value);
-    const infoValid = validateField('info', infoField.value);
     const commentsValid = validateField('comments', commentsField.value);
     
-    isValid = nameValid && communicationValid && infoValid && commentsValid;
+    isValid = nameValid && communicationValid && commentsValid;
     
     return isValid;
 }
@@ -233,7 +228,6 @@ function resetForm() {
     // Clear errors
     clearError('name');
     clearError('communication');
-    clearError('info');
     clearError('comments');
     
     // Reset option cards
@@ -284,9 +278,9 @@ if (error.name === 'AbortError') {
 if (error.message.includes('Failed to fetch') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
     throw new Error('Cannot connect to server. Please check your internet connection and try again.');
 }
-if (error.message.includes('CORS') || error.message.includes('Access-Control-Allow-Origin')) {
-    throw new Error('CORS error detected. This is a localhost testing issue. The form will work perfectly when deployed to a proper domain. For now, try refreshing the page or testing from a different browser.');
-}
+        if (error.message.includes('CORS') || error.message.includes('Access-Control-Allow-Origin')) {
+            throw new Error('CORS error detected. This is a localhost issue. The form will work perfectly when deployed to a proper domain. For now, try refreshing the page or using a different browser.');
+        }
 // Retry logic for network errors
 if (attempt < CONFIG.RETRY_ATTEMPTS && (
     error.message.includes('Failed to fetch') || 
@@ -436,7 +430,7 @@ nameField.addEventListener('input', () => {
 const words = nameField.value.split(' ');
 const capitalizedWords = words.map(word => {
     if (word.length > 0) {
-word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }
     return word;
 });
@@ -677,10 +671,6 @@ function openSelectedContactApp() {
         showError('communication', validationRules.communication.message);
         return;
     }
-    if (!info) {
-        showError('info', 'Please provide contact details');
-        return;
-    }
     if (!link) return;
     // Prefer opening in same tab for deep links on mobile; fallback to new tab for web URLs
     if (/^(tg|whatsapp|mailto|msteams):/i.test(link)) {
@@ -700,11 +690,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (infoField) {
-        // Single press/click on the contact details opens the selected app
-        infoField.addEventListener('click', (e) => {
-            e.preventDefault();
-            openSelectedContactApp();
-        });
-    }
 });

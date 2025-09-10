@@ -9,7 +9,7 @@
 /meetings /meetings.html 200
 /meetings/ /meetings.html 200
 
-# Direct file access (for debugging)
+# Direct file access
 /admin.html /admin.html 200
 /meetings.html /meetings.html 200
 

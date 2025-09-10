@@ -379,7 +379,6 @@ function setupEventListeners() {
     // Authentication events
     const pinLoginBtn = document.getElementById('pinLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-    const testDashboardBtn = document.getElementById('testDashboardBtn');
     
     if (pinLoginBtn) {
         pinLoginBtn.addEventListener('click', handlePinLogin);
@@ -389,13 +388,6 @@ function setupEventListeners() {
         logoutBtn.addEventListener('click', handleLogout);
     }
     
-    if (testDashboardBtn) {
-        testDashboardBtn.addEventListener('click', () => {
-            isAuthenticated = true;
-            authToken = 'test-token';
-            showAdminDashboard();
-        });
-    }
     
     // Meetings section
     if (refreshMeetings) {

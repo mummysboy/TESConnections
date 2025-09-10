@@ -2,7 +2,7 @@
 // 
 // WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
 // 
-// NOTE: For localhost testing, CORS preflight requests may fail.
+// NOTE: CORS preflight requests may fail on localhost.
 // The form will work perfectly when deployed to a proper domain.
 //
 // Configuration - Update these with your actual AWS API Gateway endpoint
@@ -64,10 +64,6 @@ message: 'Please enter a valid name (2-100 characters)'
     communication: {
 required: true,
 message: 'Please select your preferred communication method'
-    },
-    info: {
-maxLength: 500,
-message: 'Additional information must be 500 characters or less'
     },
     comments: {
 maxLength: 1000,
@@ -378,11 +374,10 @@ function validateForm() {
     // Validate all fields
     const nameValid = validateField('name', nameField.value);
     const communicationValid = validateField('communication', communicationField.value);
-    const infoValid = validateField('info', infoField.value);
     const commentsValid = validateField('comments', commentsField.value);
     const timeSlotValid = validateField('timeSlot', selectedTimeSlotField.value);
     
-    isValid = nameValid && communicationValid && infoValid && commentsValid && timeSlotValid;
+    isValid = nameValid && communicationValid && commentsValid && timeSlotValid;
     
     return isValid;
 }
@@ -423,7 +418,6 @@ function resetForm() {
     // Clear errors
     clearError('name');
     clearError('communication');
-    clearError('info');
     clearError('comments');
     clearError('timeSlot');
     
@@ -493,7 +487,7 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
         }
         
         if (error.message.includes('CORS') || error.message.includes('Access-Control-Allow-Origin')) {
-            throw new Error('CORS error detected. This is a localhost testing issue. The form will work perfectly when deployed to a proper domain. For now, try refreshing the page or testing from a different browser.');
+            throw new Error('CORS error detected. This is a localhost issue. The form will work perfectly when deployed to a proper domain. For now, try refreshing the page or using a different browser.');
         }
         // Retry logic for network errors
         if (attempt < CONFIG.RETRY_ATTEMPTS && (
@@ -604,8 +598,8 @@ await refreshCalendar();
 // Track successful submission
 if (typeof gtag !== 'undefined') {
     gtag('event', 'form_submit', {
-category: 'engagement',
-label: 'meeting_booking'
+        category: 'engagement',
+        label: 'meeting_booking'
     });
 }
     } catch (error) {
@@ -660,17 +654,6 @@ if (nameField.value !== capitalizedText) {
     }
 });
 
-infoField.addEventListener('input', () => {
-    // Capitalize first letter
-    if (infoField.value.length > 0) {
-const firstChar = infoField.value.charAt(0);
-const restOfText = infoField.value.slice(1);
-const capitalizedText = firstChar.toUpperCase() + restOfText;
-if (infoField.value !== capitalizedText) {
-    infoField.value = capitalizedText;
-}
-    }
-});
 
 commentsField.addEventListener('input', () => {
     // Capitalize first letter
@@ -982,10 +965,6 @@ function openSelectedContactApp() {
         showError('communication', validationRules.communication.message);
         return;
     }
-    if (!info) {
-        showError('info', 'Please provide contact details');
-        return;
-    }
     if (!link) return;
     if (/^(tg|whatsapp|mailto|msteams):/i.test(link)) {
         window.location.href = link;
@@ -1004,7 +983,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (infoField) {
-        // Allow normal input behavior; provide an explicit helper icon in future if needed
-    }
 });

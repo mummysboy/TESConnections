@@ -116,6 +116,13 @@ function initializeDOMElements() {
     connectionsEmptyState = document.getElementById('connectionsEmptyState');
     refreshConnections = document.getElementById('refreshConnections');
     exportConnections = document.getElementById('exportConnections');
+    
+    // Validate that critical elements exist
+    if (!totalMeetingsEl || !todayMeetingsEl || !totalConnectionsEl) {
+        return false;
+    }
+    
+    return true;
 }
 
 // Detect local development environment (kept for diagnostics only)
@@ -128,7 +135,10 @@ const IS_LOCAL = (typeof window !== 'undefined') && (
 
 // Initialize admin dashboard
 document.addEventListener('DOMContentLoaded', () => {
-    initializeDOMElements();
+    const elementsInitialized = initializeDOMElements();
+    if (!elementsInitialized) {
+        return;
+    }
     checkAuthentication();
     setupEventListeners();
     setupModal();
@@ -143,13 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Check if user is already authenticated
 function checkAuthentication() {
-    console.log('Checking authentication...');
-    
     // Check if user is already authenticated via PIN
     const storedAuth = localStorage.getItem('admin_authenticated');
     const storedToken = localStorage.getItem('admin_token');
-    
-    console.log('Stored auth:', storedAuth, 'Stored token:', storedToken ? 'present' : 'missing');
     
     if (storedAuth === 'true' && storedToken) {
         // Validate token format (basic check)
@@ -159,20 +165,16 @@ function checkAuthentication() {
             if (tokenParts.length === 3) {
                 isAuthenticated = true;
                 authToken = storedToken;
-                console.log('Authentication valid, showing dashboard');
                 showAdminDashboard();
             } else {
-                console.log('Invalid token format, clearing authentication');
                 clearAuthentication();
                 showLoginScreen();
             }
         } catch (error) {
-            console.log('Token validation failed:', error);
             clearAuthentication();
             showLoginScreen();
         }
     } else {
-        console.log('No valid authentication found, showing login screen');
         clearAuthentication();
         showLoginScreen();
     }
@@ -357,11 +359,6 @@ function removePinDigit() {
 async function submitPin() {
     if (pinEntry.length !== 4) return;
     
-    console.log('=== PIN AUTHENTICATION DEBUG ===');
-    console.log('Submitting PIN for authentication...');
-    console.log('PIN_AUTH_ENDPOINT:', CONFIG.PIN_AUTH_ENDPOINT);
-    console.log('PIN length:', pinEntry.length);
-    
     try {
         showPinLoading(true);
         
@@ -375,20 +372,12 @@ async function submitPin() {
             mode: 'cors' // Explicitly set CORS mode
         });
         
-        console.log('PIN auth response status:', response.status);
-        console.log('PIN auth response headers:', Object.fromEntries(response.headers.entries()));
-        
         const data = await response.json();
-        console.log('PIN auth response data:', data);
         
         if (response.ok && data.success) {
             // Store the session token
             authToken = data.sessionToken;
             isAuthenticated = true;
-            
-            console.log('PIN authentication successful, storing token');
-            console.log('Token length:', authToken.length);
-            console.log('Token preview:', authToken.substring(0, 20) + '...');
             
             // Store authentication state in localStorage
             localStorage.setItem('admin_authenticated', 'true');
@@ -407,16 +396,9 @@ async function submitPin() {
                 updateUserInfo(user);
             }, 100);
         } else {
-            console.error('PIN authentication failed:', data.message);
             showPinError(data.message || 'Invalid PIN. Please try again.');
         }
     } catch (error) {
-        console.error('PIN authentication error:', error);
-        console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
         showPinError(`Authentication failed: ${error.message}`);
     } finally {
         showPinLoading(false);
@@ -473,152 +455,21 @@ function handleLogout() {
     showLoginScreen();
 }
 
-// Show debug information
-function showDebugInfo() {
-    const debugInfo = {
-        isLocal: IS_LOCAL,
-        isAuthenticated: isAuthenticated,
-        hasToken: !!authToken,
-        tokenType: authToken === 'test-token' ? 'test' : 'real',
-        apiEndpoint: CONFIG.ADMIN_ENDPOINT,
-        pinAuthEndpoint: CONFIG.PIN_AUTH_ENDPOINT,
-        localStorage: {
-            admin_authenticated: localStorage.getItem('admin_authenticated'),
-            admin_token: localStorage.getItem('admin_token') ? 'present' : 'missing'
-        },
-        dataCounts: {
-            allData: allData.length,
-            meetings: meetingsData.length,
-            connections: connectionsData.length
-        },
-        userAgent: navigator.userAgent,
-        location: window.location.href
-    };
-    
-    const debugText = JSON.stringify(debugInfo, null, 2);
-    
-    // Create debug modal
-    const modalContent = `
-        <div class="debug-modal-header">
-            <h3 class="debug-modal-title">
-                <i class="fas fa-bug"></i>
-                Debug Information
-            </h3>
-            <button class="debug-modal-close" onclick="closeDebugModal()">&times;</button>
-        </div>
-        <div class="debug-modal-body">
-            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">${debugText}</pre>
-            <div style="margin-top: 15px;">
-                <button onclick="copyDebugInfo()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                    <i class="fas fa-copy"></i> Copy Debug Info
-                </button>
-                <button onclick="testApiConnection()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
-                    <i class="fas fa-network-wired"></i> Test API Connection
-                </button>
-            </div>
-        </div>
-    `;
-    
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'debug-modal-overlay';
-    modalOverlay.innerHTML = `
-        <div class="debug-modal-content">
-            ${modalContent}
-        </div>
-    `;
-    
-    document.body.appendChild(modalOverlay);
-    
-    // Store debug info globally for copying
-    window.debugInfo = debugText;
-    
-    // Show modal with animation
-    setTimeout(() => {
-        modalOverlay.classList.add('active');
-    }, 10);
-    
-    // Close on outside click
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
-            closeDebugModal();
-        }
-    });
-}
 
-// Close debug modal
-function closeDebugModal() {
-    const modalOverlay = document.querySelector('.debug-modal-overlay');
-    if (modalOverlay) {
-        modalOverlay.classList.remove('active');
-        setTimeout(() => {
-            modalOverlay.remove();
-        }, 300);
-    }
-}
 
-// Copy debug info to clipboard
-function copyDebugInfo() {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(window.debugInfo).then(() => {
-            showSuccess('Debug info copied to clipboard');
-        }).catch(() => {
-            showError('Failed to copy debug info');
-        });
-    } else {
-        showError('Clipboard API not available');
-    }
-}
 
-// Test API connection
-async function testApiConnection() {
-    try {
-        const response = await fetch(CONFIG.ADMIN_ENDPOINT, {
-            method: 'GET',
-            mode: 'cors'
-        });
-        
-        const result = {
-            status: response.status,
-            statusText: response.statusText,
-            headers: Object.fromEntries(response.headers.entries()),
-            url: response.url
-        };
-        
-        console.log('API connection test result:', result);
-        showSuccess(`API test completed. Status: ${response.status}`);
-    } catch (error) {
-        console.error('API connection test failed:', error);
-        showError(`API test failed: ${error.message}`);
-    }
-}
 
 // Setup event listeners
 function setupEventListeners() {
     // Authentication events
     const pinLoginBtn = document.getElementById('pinLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-    const testDashboardBtn = document.getElementById('testDashboardBtn');
-    const debugInfoBtn = document.getElementById('debugInfoBtn');
-    
     if (pinLoginBtn) {
         pinLoginBtn.addEventListener('click', handlePinLogin);
     }
     
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
-    }
-    
-    if (testDashboardBtn) {
-        testDashboardBtn.addEventListener('click', () => {
-            console.log('Test dashboard button clicked');
-            isAuthenticated = true;
-            authToken = 'test-token';
-            showAdminDashboard();
-        });
-    }
-    
-    if (debugInfoBtn) {
-        debugInfoBtn.addEventListener('click', showDebugInfo);
     }
     
     // Meetings section
@@ -643,35 +494,22 @@ function setupEventListeners() {
 
 // Load data from API
 async function loadData() {
-    console.log('=== LOAD DATA DEBUG ===');
-    console.log('Loading admin data...');
-    console.log('Current authentication state:', {
-        isAuthenticated: isAuthenticated,
-        hasToken: !!authToken,
-        tokenType: authToken === 'test-token' ? 'test' : 'real'
-    });
     
     showLoading(true);
     
     try {
         const data = await fetchAdminData();
-        console.log('Fetched data:', data);
-        console.log('Data length:', data.length);
         
         if (data.length === 0) {
-            console.log('No data found in database');
             showError('No data found in database.');
             meetingsData = [];
             connectionsData = [];
         } else {
             allData = data;
-            console.log('Total data items:', allData.length);
             
             // Separate meetings and connections
             meetingsData = allData.filter(item => item.type === 'meeting');
             connectionsData = allData.filter(item => item.type === 'connection');
-            
-            console.log('Meetings:', meetingsData.length, 'Connections:', connectionsData.length);
             
             // Sort meetings by actual meeting time (soonest to latest)
             meetingsData.sort((a, b) => {
@@ -693,18 +531,10 @@ async function loadData() {
             connectionsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
         
-        console.log('About to update stats and render tables');
         updateStats();
         renderTables();
-        console.log('Stats updated and tables rendered');
         
     } catch (error) {
-        console.error('Error in loadData:', error);
-        console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
         showError(`Failed to load data: ${error.message}`);
     } finally {
         showLoading(false);
@@ -714,47 +544,37 @@ async function loadData() {
 // Fetch data from API
 async function fetchAdminData() {
     try {
-        console.log('=== FETCH ADMIN DATA DEBUG ===');
-        console.log('IS_LOCAL:', IS_LOCAL);
-        console.log('isAuthenticated:', isAuthenticated);
-        console.log('authToken:', authToken ? 'present' : 'missing');
-        console.log('ADMIN_ENDPOINT:', CONFIG.ADMIN_ENDPOINT);
         
         // In local development, load mock data
         if (IS_LOCAL) {
-            console.log('Loading mock data for local development');
             try {
                 const resp = await fetch('admin-sample.json', { cache: 'no-store' });
                 if (resp.ok) {
                     const mock = await resp.json();
-                    console.log('Loaded mock data:', mock);
                     return Array.isArray(mock) ? mock : (mock.submissions || []);
                 }
             } catch (error) {
-                console.error('Failed to load mock data:', error);
+                // Silent error handling
             }
             return [];
         }
         
         // Check authentication before making API call
         if (!isAuthenticated || !authToken) {
-            console.error('Not authenticated - cannot fetch admin data');
             showError('Authentication required. Please log in again.');
             return [];
         }
         
         // Handle test token - load mock data
         if (authToken === 'test-token') {
-            console.log('Using test token, loading mock data');
             try {
                 const resp = await fetch('admin-sample.json', { cache: 'no-store' });
                 if (resp.ok) {
                     const mock = await resp.json();
-                    console.log('Loaded mock data for test:', mock);
                     return Array.isArray(mock) ? mock : (mock.submissions || []);
                 }
             } catch (error) {
-                console.error('Failed to load mock data for test:', error);
+                // Silent error handling
             }
             return [];
         }
@@ -764,10 +584,6 @@ async function fetchAdminData() {
         const sep = url.includes('?') ? '&' : '?';
         url = `${url}${sep}token=${encodeURIComponent(authToken)}`;
         
-        console.log('Fetching admin data from:', url);
-        console.log('Token length:', authToken.length);
-        console.log('Token preview:', authToken.substring(0, 20) + '...');
-        
         const response = await fetch(url, {
             method: 'GET',
             mode: 'cors',
@@ -776,12 +592,8 @@ async function fetchAdminData() {
             }
         });
         
-        console.log('Admin data response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
         // Handle authentication errors
         if (response.status === 401) {
-            console.error('Authentication failed - token may be expired');
             showError('Authentication expired. Please log in again.');
             // Clear invalid authentication
             localStorage.removeItem('admin_authenticated');
@@ -794,37 +606,23 @@ async function fetchAdminData() {
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('API error:', response.status, errorText);
             throw new Error(`Failed to fetch data: ${response.status} - ${errorText}`);
         }
         
         const data = await response.json();
-        console.log('Received admin data:', data);
-        console.log('Data type:', typeof data);
-        console.log('Is array:', Array.isArray(data));
         
         // Handle different response formats
         if (Array.isArray(data)) {
-            console.log('Returning data as array, length:', data.length);
             return data;
         } else if (data.submissions) {
-            console.log('Returning data.submissions, length:', data.submissions.length);
             return data.submissions;
         } else if (data.data) {
-            console.log('Returning data.data, length:', data.data.length);
             return data.data;
         } else {
-            console.warn('Unexpected data format:', data);
             return [];
         }
         
     } catch (error) {
-        console.error('Error fetching admin data:', error);
-        console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
         if (!IS_LOCAL) {
             showError(`Failed to load data: ${error.message}`);
         }
@@ -1717,93 +1515,7 @@ function setupModal() {
 }
 
 
-// Test API endpoints directly
-window.testAdminAPI = async function() {
-    console.log('=== TESTING ADMIN API ENDPOINTS ===');
-    
-    // Test PIN auth endpoint
-    console.log('Testing PIN auth endpoint...');
-    try {
-        const pinResponse = await fetch(CONFIG.PIN_AUTH_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ pin: '1954' }),
-            mode: 'cors'
-        });
-        
-        console.log('PIN auth response status:', pinResponse.status);
-        const pinData = await pinResponse.json();
-        console.log('PIN auth response data:', pinData);
-        
-        if (pinData.success && pinData.sessionToken) {
-            console.log('PIN auth successful! Testing admin-data endpoint...');
-            
-            // Test admin-data endpoint
-            const adminUrl = `${CONFIG.ADMIN_ENDPOINT}?token=${encodeURIComponent(pinData.sessionToken)}`;
-            console.log('Testing admin-data endpoint:', adminUrl);
-            
-            const adminResponse = await fetch(adminUrl, {
-                method: 'GET',
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            
-            console.log('Admin data response status:', adminResponse.status);
-            const adminData = await adminResponse.json();
-            console.log('Admin data response:', adminData);
-            
-            return {
-                pinAuth: { status: pinResponse.status, data: pinData },
-                adminData: { status: adminResponse.status, data: adminData }
-            };
-        } else {
-            console.error('PIN auth failed, cannot test admin-data endpoint');
-            return { pinAuth: { status: pinResponse.status, data: pinData } };
-        }
-    } catch (error) {
-        console.error('API test error:', error);
-        return { error: error.message };
-    }
-};
 
-// Test admin data endpoint with current token
-window.testAdminData = async function() {
-    console.log('=== TESTING ADMIN DATA WITH CURRENT TOKEN ===');
-    console.log('Current token:', authToken ? 'present' : 'missing');
-    
-    if (!authToken) {
-        console.error('No authentication token available');
-        return;
-    }
-    
-    try {
-        const url = `${CONFIG.ADMIN_ENDPOINT}?token=${encodeURIComponent(authToken)}`;
-        console.log('Testing URL:', url);
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
-        const data = await response.json();
-        console.log('Response data:', data);
-        
-        return { status: response.status, data: data };
-    } catch (error) {
-        console.error('Test error:', error);
-        return { error: error.message };
-    }
-};
 
 // Add CSS animations
 const style = document.createElement('style');
@@ -1864,57 +1576,5 @@ style.textContent = `
         line-height: 1.5;
     }
     
-    .debug-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .debug-modal-overlay.active {
-        opacity: 1;
-    }
-    
-    .debug-modal-content {
-        background: white;
-        border-radius: 8px;
-        max-width: 80%;
-        max-height: 80%;
-        overflow: auto;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
-    
-    .debug-modal-header {
-        padding: 20px;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .debug-modal-title {
-        margin: 0;
-        color: var(--electric-blue);
-    }
-    
-    .debug-modal-close {
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #666;
-    }
-    
-    .debug-modal-body {
-        padding: 20px;
-    }
 `;
 document.head.appendChild(style);
