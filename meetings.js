@@ -82,6 +82,26 @@ function generateTimeSlots(date) {
     const endHour = 17; // 5:00 PM
     const interval = 15; // 15 minutes
     
+    // Validate that the date is in the allowed range
+    const allowedDates = [
+        new Date(2025, 8, 12), // September 12, 2025 (month is 0-indexed)
+        new Date(2025, 8, 13), // September 13, 2025
+        new Date(2025, 8, 14), // September 14, 2025
+        new Date(2025, 8, 15)  // September 15, 2025
+    ];
+    
+    // Check if the date is in the allowed range
+    const isValidDate = allowedDates.some(allowedDate => 
+        date.getFullYear() === allowedDate.getFullYear() &&
+        date.getMonth() === allowedDate.getMonth() &&
+        date.getDate() === allowedDate.getDate()
+    );
+    
+    if (!isValidDate) {
+        console.warn('Invalid date provided to generateTimeSlots:', date);
+        return [];
+    }
+    
     for (let hour = startHour; hour < endHour; hour++) {
         for (let minute = 0; minute < 60; minute += interval) {
             const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
@@ -840,6 +860,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!selectedDayElement || !prevDayBtn || !nextDayBtn) {
 return;
     }
+    
+    // Ensure calendar starts on the first valid date (September 12, 2025)
+    calendarData.currentDateIndex = 0;
+    calendarData.selectedTimeSlot = null;
     
     // Load actual booked slots from database
     await loadBookedSlots();
