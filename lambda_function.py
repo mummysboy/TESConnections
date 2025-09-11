@@ -24,7 +24,9 @@ RATE_LIMIT_WINDOW = 300  # 5 minutes
 MAX_REQUESTS_PER_WINDOW = 5  # Max 5 requests per 5 minutes
 ALLOWED_ORIGINS = [
     'https://main.dbovg7p76124l.amplifyapp.com',
-    'https://tesconnections.com'
+    'https://tesconnections.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
 ]
 
 # API Key configuration
