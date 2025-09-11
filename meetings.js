@@ -42,10 +42,10 @@ let selectedDayElement, prevDayBtn, nextDayBtn;
 // Calendar data
 const calendarData = {
     availableDates: [
-new Date(2025, 8, 12), // September 12, 2025 (month is 0-indexed)
-new Date(2025, 8, 13), // September 13, 2025
-new Date(2025, 8, 14), // September 14, 2025
-new Date(2025, 8, 15)  // September 15, 2025
+        '2025-09-12', // September 12, 2025 (Friday)
+        '2025-09-13', // September 13, 2025 (Saturday)
+        '2025-09-14', // September 14, 2025 (Sunday)
+        '2025-09-15'  // September 15, 2025 (Monday)
     ],
     currentDateIndex: 0,
     selectedTimeSlot: null,
@@ -75,8 +75,8 @@ message: 'Please select a meeting time'
     }
 };
 
-// Generate time slots for a given date
-function generateTimeSlots(date) {
+// Generate time slots for a given date string
+function generateTimeSlots(dateString) {
     const slots = [];
     const startHour = 9; // 9:00 AM
     const endHour = 17; // 5:00 PM
@@ -84,28 +84,21 @@ function generateTimeSlots(date) {
     
     // Validate that the date is in the allowed range
     const allowedDates = [
-        new Date(2025, 8, 12), // September 12, 2025 (month is 0-indexed)
-        new Date(2025, 8, 13), // September 13, 2025
-        new Date(2025, 8, 14), // September 14, 2025
-        new Date(2025, 8, 15)  // September 15, 2025
+        '2025-09-12', // September 12, 2025 (Friday)
+        '2025-09-13', // September 13, 2025 (Saturday)
+        '2025-09-14', // September 14, 2025 (Sunday)
+        '2025-09-15'  // September 15, 2025 (Monday)
     ];
     
     // Check if the date is in the allowed range
-    const isValidDate = allowedDates.some(allowedDate => 
-        date.getFullYear() === allowedDate.getFullYear() &&
-        date.getMonth() === allowedDate.getMonth() &&
-        date.getDate() === allowedDate.getDate()
-    );
-    
-    if (!isValidDate) {
-        console.warn('Invalid date provided to generateTimeSlots:', date);
+    if (!allowedDates.includes(dateString)) {
+        console.warn('Invalid date provided to generateTimeSlots:', dateString);
         return [];
     }
     
     for (let hour = startHour; hour < endHour; hour++) {
         for (let minute = 0; minute < 60; minute += interval) {
             const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-            const dateString = date.toISOString().split('T')[0];
             const slotId = `${dateString}-${timeString}`;
             slots.push({
                 id: slotId,
@@ -119,23 +112,32 @@ function generateTimeSlots(date) {
     return slots;
 }
 
-// Format date for display
-function formatDate(date) {
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+// Format date string for display
+function formatDate(dateString) {
+    const dateMap = {
+        '2025-09-12': 'Fri, Sep 12',
+        '2025-09-13': 'Sat, Sep 13', 
+        '2025-09-14': 'Sun, Sep 14',
+        '2025-09-15': 'Mon, Sep 15'
+    };
+    return dateMap[dateString] || dateString;
 }
 
-// Format date for day display
-function formatDayDisplay(date) {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const dayNumber = date.getDate();
-    return { dayName, dayNumber };
+// Format date string for day display
+function formatDayDisplay(dateString) {
+    const dateMap = {
+        '2025-09-12': { dayName: 'Friday', dayNumber: 12 },
+        '2025-09-13': { dayName: 'Saturday', dayNumber: 13 },
+        '2025-09-14': { dayName: 'Sunday', dayNumber: 14 },
+        '2025-09-15': { dayName: 'Monday', dayNumber: 15 }
+    };
+    return dateMap[dateString] || { dayName: 'Unknown', dayNumber: 0 };
 }
 
 // Update day navigation display
 function updateDayDisplay() {
-    const currentDate = calendarData.availableDates[calendarData.currentDateIndex];
-    const { dayName, dayNumber } = formatDayDisplay(currentDate);
+    const currentDateString = calendarData.availableDates[calendarData.currentDateIndex];
+    const { dayName, dayNumber } = formatDayDisplay(currentDateString);
     
     selectedDayElement.innerHTML = `
 <div class="selected-day-date">${dayNumber}</div>
@@ -147,7 +149,7 @@ function updateDayDisplay() {
     nextDayBtn.disabled = calendarData.currentDateIndex === calendarData.availableDates.length - 1;
     
     // Generate time slots for current date
-    generateTimeSlotsForDate(currentDate);
+    generateTimeSlotsForDate(currentDateString);
     clearError('timeSlot');
 }
 
@@ -174,8 +176,8 @@ addRippleEffect(nextDayBtn, { clientX: nextDayBtn.offsetLeft + nextDayBtn.offset
 }
 
 // Generate time slots for selected date
-function generateTimeSlotsForDate(date) {
-    const slots = generateTimeSlots(date);
+function generateTimeSlotsForDate(dateString) {
+    const slots = generateTimeSlots(dateString);
     
     // Remove existing time slots container
     const existingContainer = document.querySelector('.time-slots-container');
@@ -190,7 +192,7 @@ existingContainer.remove();
     
     const title = document.createElement('div');
     title.className = 'time-slots-title';
-    title.textContent = `Available Times - ${formatDate(date)}`;
+    title.textContent = `Available Times - ${formatDate(dateString)}`;
     container.appendChild(title);
     
     // Separate available and booked slots
@@ -491,8 +493,28 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
         clearTimeout(timeoutId);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server error (${response.status}). Please try again.`);
+            let errorMessage = `Server error (${response.status}). Please try again.`;
+            
+            try {
+                const errorData = await response.json();
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (e) {
+                // If JSON parsing fails, use the text response
+                try {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                } catch (textError) {
+                    // Keep the default error message
+                }
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const result = await response.json();
