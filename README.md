@@ -1,4 +1,4 @@
-# TESConnections Landing Page
+# DMEXCOConnections Landing Page
 
 A mobile-first responsive landing page with Hinge-style UX and masculine theme for collecting contact information with AWS backend integration.
 

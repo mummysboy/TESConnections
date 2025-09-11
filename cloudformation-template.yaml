@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'TESConnections Landing Page Infrastructure'
+Description: 'DMEXCOConnections Landing Page Infrastructure'
 
 Parameters:
   Environment:
@@ -19,7 +19,7 @@ Parameters:
   FormApiKey:
     Type: String
     NoEcho: true
-    Default: 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl'
+    Default: 'dmexco_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl'
     Description: 'API key for form submissions'
 
 Resources:
@@ -27,7 +27,7 @@ Resources:
   AdminUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Sub 'tes-connections-admin-pool-${Environment}'
+      UserPoolName: !Sub 'dmexco-connections-admin-pool-${Environment}'
       UsernameAttributes:
         - email
       AutoVerifiedAttributes:
@@ -54,7 +54,7 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId: !Ref AdminUserPool
-      ClientName: !Sub 'tes-connections-admin-client-${Environment}'
+      ClientName: !Sub 'dmexco-connections-admin-client-${Environment}'
       GenerateSecret: false
       ExplicitAuthFlows:
         - ALLOW_USER_SRP_AUTH
@@ -65,13 +65,13 @@ Resources:
         - !Sub 'https://${WebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com/admin.html'
         - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/admin.html'
         - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/'
-        - !Sub 'https://tesconnections.com/admin.html'
+        - !Sub 'https://dmexco-connections.com/admin.html'
         - 'http://localhost:5500/admin.html'
       LogoutURLs:
         - !Sub 'https://${WebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com/admin.html'
         - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/admin.html'
         - !Sub 'https://main.dbovg7p76124l.amplifyapp.com/'
-        - !Sub 'https://tesconnections.com/admin.html'
+        - !Sub 'https://dmexco-connections.com/admin.html'
         - 'http://localhost:5500/admin.html'
       AllowedOAuthFlows:
         - implicit
@@ -87,13 +87,13 @@ Resources:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
       UserPoolId: !Ref AdminUserPool
-      Domain: !Sub 'tes-connections-admin-${Environment}-${AWS::AccountId}'
+      Domain: !Sub 'dmexco-connections-admin-${Environment}-${AWS::AccountId}'
 
   # DynamoDB Table
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub 'tes-connections-${Environment}'
+      TableName: !Sub 'dmexco-connections-${Environment}'
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: id
@@ -126,7 +126,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
-          Value: TESConnections
+          Value: DMEXCOConnections
         - Key: Security
           Value: Encrypted
 
@@ -134,7 +134,7 @@ Resources:
   DynamoDBKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: !Sub 'KMS key for TESConnections DynamoDB encryption - ${Environment}'
+      Description: !Sub 'KMS key for DMEXCOConnections DynamoDB encryption - ${Environment}'
       KeyPolicy:
         Version: '2012-10-17'
         Statement:
@@ -156,13 +156,13 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
-          Value: TESConnections
+          Value: DMEXCOConnections
 
   # Lambda Execution Role
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub 'tes-connections-lambda-role-${Environment}'
+      RoleName: !Sub 'dmexco-connections-lambda-role-${Environment}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -223,7 +223,7 @@ Resources:
   FormSubmissionLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub 'tes-connections-form-handler-${Environment}'
+      FunctionName: !Sub 'dmexco-connections-form-handler-${Environment}'
       Runtime: python3.9
       Handler: lambda_function.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -238,7 +238,7 @@ Resources:
           
           # Initialize DynamoDB
           dynamodb = boto3.resource('dynamodb')
-          table_name = os.environ.get('DYNAMODB_TABLE', 'tes-connections')
+          table_name = os.environ.get('DYNAMODB_TABLE', 'dmexco-connections')
           table = dynamodb.Table(table_name)
           
           def lambda_handler(event, context):
@@ -338,8 +338,8 @@ Resources:
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: !Sub 'tes-connections-api-${Environment}'
-      Description: 'API Gateway for TESConnections form submissions'
+      Name: !Sub 'dmexco-connections-api-${Environment}'
+      Description: 'API Gateway for DMEXCOConnections form submissions'
       EndpointConfiguration:
         Types:
           - REGIONAL
@@ -348,7 +348,7 @@ Resources:
   CognitoAuthorizer:
     Type: AWS::ApiGateway::Authorizer
     Properties:
-      Name: !Sub 'tes-connections-cognito-authorizer-${Environment}'
+      Name: !Sub 'dmexco-connections-cognito-authorizer-${Environment}'
       Type: COGNITO_USER_POOLS
       IdentitySource: method.request.header.Authorization
       RestApiId: !Ref ApiGateway
@@ -701,20 +701,20 @@ Resources:
               - EventType: viewer-request
                 FunctionARN: !GetAtt CloudFrontPrettyUrlFunction.FunctionMetadata.FunctionARN
         PriceClass: PriceClass_100
-        Comment: !Sub 'TESConnections Website Distribution - ${Environment}'
+        Comment: !Sub 'DMEXCOConnections Website Distribution - ${Environment}'
 
   # CloudFront Origin Access Identity
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub 'TESConnections OAI - ${Environment}'
+        Comment: !Sub 'DMEXCOConnections OAI - ${Environment}'
 
   # CloudFront Function to rewrite pretty URLs to .html files
   CloudFrontPrettyUrlFunction:
     Type: AWS::CloudFront::Function
     Properties:
-      Name: !Sub 'tes-connections-pretty-url-${Environment}'
+      Name: !Sub 'dmexco-connections-pretty-url-${Environment}'
       AutoPublish: true
       FunctionConfig:
         Comment: !Sub 'Rewrite /meetings and /admin to .html - ${Environment}'
@@ -741,7 +741,7 @@ Resources:
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'tes-connections-website-${Environment}-${AWS::AccountId}'
+      BucketName: !Sub 'dmexco-connections-website-${Environment}-${AWS::AccountId}'
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
         BlockPublicPolicy: false
@@ -767,7 +767,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
-          Value: TESConnections
+          Value: DMEXCOConnections
 
   # S3 Bucket Policy
   WebsiteBucketPolicy:

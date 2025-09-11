@@ -15,7 +15,7 @@ import secrets
 
 # Initialize DynamoDB
 dynamodb = boto3.resource('dynamodb')
-table_name = os.environ.get('DYNAMODB_TABLE', 'tes-connections')
+table_name = os.environ.get('DYNAMODB_TABLE', 'dmexco-connections')
 table = dynamodb.Table(table_name)
 
 # Security configuration
@@ -24,11 +24,11 @@ RATE_LIMIT_WINDOW = 300  # 5 minutes
 MAX_REQUESTS_PER_WINDOW = 5  # Max 5 requests per 5 minutes
 ALLOWED_ORIGINS = [
     'https://main.dbovg7p76124l.amplifyapp.com',
-    'https://tesconnections.com'
+    'https://dmexco-connections.com'
 ]
 
 # API Key configuration
-FORM_API_KEY = os.environ.get('FORM_API_KEY', 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl')
+FORM_API_KEY = os.environ.get('FORM_API_KEY', 'dmexco_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl')
 
 # Cognito configuration
 COGNITO_USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID', '')
@@ -387,7 +387,7 @@ def get_cors_headers(origin):
     # Default CORS headers - restricted to allowed origins only
     default_headers = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': 'https://tesconnections.com',  # Default to main domain
+        'Access-Control-Allow-Origin': 'https://dmexco-connections.com',  # Default to main domain
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
         'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
         'Access-Control-Max-Age': '86400'

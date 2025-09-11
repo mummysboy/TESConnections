@@ -1,4 +1,4 @@
-// TESConnections - Admin Dashboard JavaScript
+// DMEXCOConnections - Admin Dashboard JavaScript
 
 
 // Configuration

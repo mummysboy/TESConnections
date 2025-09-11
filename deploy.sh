@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# TESConnections Deployment Script
+# DMEXCOConnections Deployment Script
 # Usage: ./deploy.sh [environment] 
 # Example: ./deploy.sh prod
 
@@ -9,7 +9,7 @@ set -e  # Exit on any error
 # Configuration
 ENVIRONMENT=${1:-prod}
 AWS_REGION=${AWS_REGION:-us-east-1}
-STACK_PREFIX=${STACK_PREFIX:-tes-connections}
+STACK_PREFIX=${STACK_PREFIX:-dmexco-connections}
 STACK_NAME="${STACK_PREFIX}-${ENVIRONMENT}"
 
 # Colors for output
