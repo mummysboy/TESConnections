@@ -24,7 +24,11 @@ RATE_LIMIT_WINDOW = 300  # 5 minutes
 MAX_REQUESTS_PER_WINDOW = 5  # Max 5 requests per 5 minutes
 ALLOWED_ORIGINS = [
     'https://main.dbovg7p76124l.amplifyapp.com',
-    'https://dmexco-connections.com'
+    'https://dmexco-connections.com',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
 ]
 
 # API Key configuration
@@ -387,7 +391,7 @@ def get_cors_headers(origin):
     # Default CORS headers - restricted to allowed origins only
     default_headers = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': 'https://dmexco-connections.com',  # Default to main domain
+        'Access-Control-Allow-Origin': 'http://127.0.0.1:5500',  # Default to localhost for development
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
         'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
         'Access-Control-Max-Age': '86400'
