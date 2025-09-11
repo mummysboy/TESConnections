@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Meeting Booking Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .form-group { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; }
+        input, select, textarea { width: 300px; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>Simple Meeting Booking Test</h1>
+    
+    <form id="bookingForm">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="John Smith" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="communication">Communication Method:</label>
+            <select id="communication" name="communication" required>
+                <option value="email">Email</option>
+                <option value="telegram">Telegram</option>
+                <option value="teams">Teams</option>
+                <option value="whatsapp">WhatsApp</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="info">Contact Info:</label>
+            <input type="text" id="info" name="info" value="john@example.com">
+        </div>
+        
+        <div class="form-group">
+            <label for="comments">Comments:</label>
+            <textarea id="comments" name="comments">Test booking</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="timeSlot">Time Slot:</label>
+            <select id="timeSlot" name="timeSlot" required>
+                <option value="2025-09-12-10:00">Sep 12, 2025 - 10:00 AM</option>
+                <option value="2025-09-12-10:15">Sep 12, 2025 - 10:15 AM</option>
+                <option value="2025-09-12-10:30">Sep 12, 2025 - 10:30 AM</option>
+                <option value="2025-09-12-10:45">Sep 12, 2025 - 10:45 AM</option>
+                <option value="2025-09-12-11:00">Sep 12, 2025 - 11:00 AM</option>
+                <option value="2025-09-12-11:15">Sep 12, 2025 - 11:15 AM</option>
+                <option value="2025-09-12-11:30">Sep 12, 2025 - 11:30 AM</option>
+                <option value="2025-09-12-11:45">Sep 12, 2025 - 11:45 AM</option>
+                <option value="2025-09-12-14:00">Sep 12, 2025 - 2:00 PM</option>
+                <option value="2025-09-12-14:15">Sep 12, 2025 - 2:15 PM</option>
+                <option value="2025-09-12-14:30">Sep 12, 2025 - 2:30 PM</option>
+                <option value="2025-09-12-14:45">Sep 12, 2025 - 2:45 PM</option>
+                <option value="2025-09-12-15:00">Sep 12, 2025 - 3:00 PM</option>
+                <option value="2025-09-12-15:15">Sep 12, 2025 - 3:15 PM</option>
+                <option value="2025-09-12-15:30">Sep 12, 2025 - 3:30 PM</option>
+                <option value="2025-09-12-15:45">Sep 12, 2025 - 3:45 PM</option>
+                <option value="2025-09-12-16:00">Sep 12, 2025 - 4:00 PM</option>
+                <option value="2025-09-12-16:15">Sep 12, 2025 - 4:15 PM</option>
+                <option value="2025-09-12-16:30">Sep 12, 2025 - 4:30 PM</option>
+                <option value="2025-09-12-16:45">Sep 12, 2025 - 4:45 PM</option>
+            </select>
+        </div>
+        
+        <button type="submit">Book Meeting</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+    document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = '<p>Submitting...</p>';
+        
+        const formData = {
+            name: document.getElementById('name').value.trim(),
+            communication: document.getElementById('communication').value,
+            info: document.getElementById('info').value.trim(),
+            comments: document.getElementById('comments').value.trim(),
+            timeSlot: document.getElementById('timeSlot').value,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            referrer: document.referrer
+        };
+        
+        try {
+            const response = await fetch('https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <h3>Success!</h3>
+                        <p><strong>Submission ID:</strong> ${data.submissionId}</p>
+                        <p><strong>Timestamp:</strong> ${data.timestamp}</p>
+                        <p><strong>Message:</strong> ${data.message}</p>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>Error (${response.status})</h3>
+                        <p><strong>Error:</strong> ${data.error}</p>
+                        <p><strong>Message:</strong> ${data.message}</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="result error">
+                    <h3>Network Error</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    });
+    </script>
+</body>
+</html>

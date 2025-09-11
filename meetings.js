@@ -454,14 +454,6 @@ if (CONFIG.API_ENDPOINT.includes('your-api-gateway-url')) {
     throw new Error('API endpoint not configured. Please update the API_ENDPOINT in meetings.js with your actual AWS API Gateway URL.');
 }
 
-// Debug: Log the request details
-console.log('Making request to:', CONFIG.API_ENDPOINT);
-console.log('Request headers:', {
-    'Content-Type': 'application/json',
-    'X-API-Key': CONFIG.API_KEY
-});
-console.log('Request body:', JSON.stringify(formData));
-
 const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
 
@@ -478,12 +470,8 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
         
         clearTimeout(timeoutId);
         
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
         if (!response.ok) {
             const errorText = await response.text();
-            console.log('Error response body:', errorText);
             throw new Error(`Server error (${response.status}). Please try again.`);
         }
         
@@ -601,8 +589,6 @@ referrer: document.referrer
     setLoadingState(true);
     
     try {
-// Debug: Log the form data being sent
-console.log('Form data being sent:', formData);
 // Submit to AWS
 await submitToAWS(formData);
 // Show success message
