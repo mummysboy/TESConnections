@@ -1,4 +1,4 @@
-// TESConnections - Admin Dashboard JavaScript
+// DMEXCO-Connections - Admin Dashboard JavaScript
 
 
 // Configuration
@@ -42,12 +42,66 @@ let allData = [];
 let meetingsData = [];
 let connectionsData = [];
 
+// Mobile optimization function
+function optimizeForMobile() {
+    // Prevent zoom on input focus for iOS
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
+    
+    // Add touch-friendly styles
+    document.body.style.touchAction = 'manipulation';
+    
+    // Optimize table scrolling
+    const tableContainers = document.querySelectorAll('.mobile-table-container');
+    tableContainers.forEach(container => {
+        container.style.webkitOverflowScrolling = 'touch';
+        container.style.overflowX = 'auto';
+    });
+    
+    // Add mobile-specific event listeners
+    addMobileEventListeners();
+}
+
+// Add mobile-specific event listeners
+function addMobileEventListeners() {
+    // Prevent double-tap zoom on buttons
+    const buttons = document.querySelectorAll('.action-btn, .btn, button');
+    buttons.forEach(button => {
+        button.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            button.click();
+        }, { passive: false });
+    });
+    
+    // Optimize table row interactions
+    const tableRows = document.querySelectorAll('tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('touchstart', function(e) {
+            this.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+        });
+        
+        row.addEventListener('touchend', function(e) {
+            setTimeout(() => {
+                this.style.backgroundColor = '';
+            }, 150);
+        });
+    });
+}
+
 // Initialize DOM elements
 function initializeDOMElements() {
     totalMeetingsEl = document.getElementById('totalMeetings');
     todayMeetingsEl = document.getElementById('todayMeetings');
     totalConnectionsEl = document.getElementById('totalConnections');
     loadingState = document.getElementById('loadingState');
+    
+    // Add mobile-specific optimizations
+    if ('ontouchstart' in window) {
+        document.body.classList.add('touch-device');
+        optimizeForMobile();
+    }
 
     // Meetings Section
     meetingsTableBody = document.getElementById('meetingsTableBody');
@@ -62,6 +116,13 @@ function initializeDOMElements() {
     connectionsEmptyState = document.getElementById('connectionsEmptyState');
     refreshConnections = document.getElementById('refreshConnections');
     exportConnections = document.getElementById('exportConnections');
+    
+    // Validate that critical elements exist
+    if (!totalMeetingsEl || !todayMeetingsEl || !totalConnectionsEl) {
+        return false;
+    }
+    
+    return true;
 }
 
 // Detect local development environment (kept for diagnostics only)
@@ -74,7 +135,10 @@ const IS_LOCAL = (typeof window !== 'undefined') && (
 
 // Initialize admin dashboard
 document.addEventListener('DOMContentLoaded', () => {
-    initializeDOMElements();
+    const elementsInitialized = initializeDOMElements();
+    if (!elementsInitialized) {
+        return;
+    }
     checkAuthentication();
     setupEventListeners();
     setupModal();
@@ -94,15 +158,34 @@ function checkAuthentication() {
     const storedToken = localStorage.getItem('admin_token');
     
     if (storedAuth === 'true' && storedToken) {
-        isAuthenticated = true;
-        authToken = storedToken;
-        showAdminDashboard();
+        // Validate token format (basic check)
+        try {
+            // Basic JWT token validation - check if it has the right structure
+            const tokenParts = storedToken.split('.');
+            if (tokenParts.length === 3) {
+                isAuthenticated = true;
+                authToken = storedToken;
+                showAdminDashboard();
+            } else {
+                clearAuthentication();
+                showLoginScreen();
+            }
+        } catch (error) {
+            clearAuthentication();
+            showLoginScreen();
+        }
     } else {
-        // Clear any invalid stored data
-        localStorage.removeItem('admin_authenticated');
-        localStorage.removeItem('admin_token');
+        clearAuthentication();
         showLoginScreen();
     }
+}
+
+// Clear authentication data
+function clearAuthentication() {
+    localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_token');
+    isAuthenticated = false;
+    authToken = null;
 }
 
 // Show login screen
@@ -276,7 +359,6 @@ function removePinDigit() {
 async function submitPin() {
     if (pinEntry.length !== 4) return;
     
-    
     try {
         showPinLoading(true);
         
@@ -289,7 +371,6 @@ async function submitPin() {
             body: JSON.stringify({ pin: pinEntry }),
             mode: 'cors' // Explicitly set CORS mode
         });
-        
         
         const data = await response.json();
         
@@ -318,7 +399,7 @@ async function submitPin() {
             showPinError(data.message || 'Invalid PIN. Please try again.');
         }
     } catch (error) {
-        showPinError('Authentication failed. Please try again.');
+        showPinError(`Authentication failed: ${error.message}`);
     } finally {
         showPinLoading(false);
     }
@@ -374,12 +455,15 @@ function handleLogout() {
     showLoginScreen();
 }
 
+
+
+
+
 // Setup event listeners
 function setupEventListeners() {
     // Authentication events
     const pinLoginBtn = document.getElementById('pinLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-    
     if (pinLoginBtn) {
         pinLoginBtn.addEventListener('click', handlePinLogin);
     }
@@ -387,7 +471,6 @@ function setupEventListeners() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
     }
-    
     
     // Meetings section
     if (refreshMeetings) {
@@ -411,6 +494,7 @@ function setupEventListeners() {
 
 // Load data from API
 async function loadData() {
+    
     showLoading(true);
     
     try {
@@ -426,7 +510,6 @@ async function loadData() {
             // Separate meetings and connections
             meetingsData = allData.filter(item => item.type === 'meeting');
             connectionsData = allData.filter(item => item.type === 'connection');
-            
             
             // Sort meetings by actual meeting time (soonest to latest)
             meetingsData.sort((a, b) => {
@@ -452,7 +535,7 @@ async function loadData() {
         renderTables();
         
     } catch (error) {
-        showError('Failed to load data. Please try again.');
+        showError(`Failed to load data: ${error.message}`);
     } finally {
         showLoading(false);
     }
@@ -461,6 +544,7 @@ async function loadData() {
 // Fetch data from API
 async function fetchAdminData() {
     try {
+        
         // In local development, load mock data
         if (IS_LOCAL) {
             try {
@@ -469,26 +553,60 @@ async function fetchAdminData() {
                     const mock = await resp.json();
                     return Array.isArray(mock) ? mock : (mock.submissions || []);
                 }
-            } catch (_) {}
+            } catch (error) {
+                // Silent error handling
+            }
             return [];
         }
+        
+        // Check authentication before making API call
+        if (!isAuthenticated || !authToken) {
+            showError('Authentication required. Please log in again.');
+            return [];
+        }
+        
+        // Handle test token - load mock data
+        if (authToken === 'test-token') {
+            try {
+                const resp = await fetch('admin-sample.json', { cache: 'no-store' });
+                if (resp.ok) {
+                    const mock = await resp.json();
+                    return Array.isArray(mock) ? mock : (mock.submissions || []);
+                }
+            } catch (error) {
+                // Silent error handling
+            }
+            return [];
+        }
+        
         // Avoid sending Content-Type on GET; pass token via query to prevent preflight
         let url = CONFIG.ADMIN_ENDPOINT;
-        if (isAuthenticated && authToken) {
-            const sep = url.includes('?') ? '&' : '?';
-            url = `${url}${sep}token=${encodeURIComponent(authToken)}`;
-        }
+        const sep = url.includes('?') ? '&' : '?';
+        url = `${url}${sep}token=${encodeURIComponent(authToken)}`;
+        
         const response = await fetch(url, {
-            method: 'GET'
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json'
+            }
         });
         
-        // Gracefully handle unauthorized in hosted env
+        // Handle authentication errors
         if (response.status === 401) {
+            showError('Authentication expired. Please log in again.');
+            // Clear invalid authentication
+            localStorage.removeItem('admin_authenticated');
+            localStorage.removeItem('admin_token');
+            isAuthenticated = false;
+            authToken = null;
+            showLoginScreen();
             return [];
         }
         
         if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`Failed to fetch data: ${response.status} - ${errorText}`);
         }
         
         const data = await response.json();
@@ -506,7 +624,7 @@ async function fetchAdminData() {
         
     } catch (error) {
         if (!IS_LOCAL) {
-            showError('Failed to load data from database. Please check your connection and try again.');
+            showError(`Failed to load data: ${error.message}`);
         }
         return [];
     }
@@ -556,26 +674,68 @@ function renderMeetingsTable() {
         // Validate and clean data
         const cleanItem = validateAndCleanMeetingData(item);
         
-        return `
-        <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
-            <td></td>
-            <td class="name-cell">${cleanItem.name}</td>
-            <td class="meeting-time">${cleanItem.meetingTime}</td>
-            <td class="meeting-actions">
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'meeting')" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="action-btn edit-btn" onclick="event.stopPropagation(); editMeeting('${cleanItem.id}')" title="Edit Meeting">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Meeting">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `;
+        // Check if mobile device
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            // Mobile layout - show only essential info
+            let actualTimeSlot = 'Not scheduled';
+            if (item.timeSlot && item.timeSlot.trim()) {
+                // Extract just the time part from format "YYYY-MM-DD-HH:MM"
+                if (item.timeSlot.includes('-') && item.timeSlot.includes(':')) {
+                    const parts = item.timeSlot.split('-');
+                    if (parts.length >= 4) {
+                        actualTimeSlot = parts[3]; // Get the time part (HH:MM)
+                    }
+                } else {
+                    actualTimeSlot = item.timeSlot;
+                }
+            }
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
+                <td class="mobile-hide"></td>
+                <td class="name-cell">
+                    <div class="mobile-name-info">
+                        <div class="name">${cleanItem.name}</div>
+                        <div class="mobile-meeting-time">${actualTimeSlot}</div>
+                    </div>
+                </td>
+                <td class="meeting-time mobile-hide">${cleanItem.meetingTime}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn-small view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'meeting')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn-small delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Meeting">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        } else {
+            // Desktop layout - show all columns
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="meeting">
+                <td></td>
+                <td class="name-cell">${cleanItem.name}</td>
+                <td class="meeting-time">${cleanItem.meetingTime}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'meeting')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" onclick="event.stopPropagation(); editMeeting('${cleanItem.id}')" title="Edit Meeting">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Meeting">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        }
     }).join('');
 }
 
@@ -613,32 +773,72 @@ function renderConnectionsTable() {
         // Validate and clean data
         const cleanItem = validateAndCleanConnectionData(item);
         
-        return `
-        <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
-            <td class="name-cell">${cleanItem.name}</td>
-            <td class="contact-info-cell">
-                <div class="contact-method">
-                    <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
-                    ${cleanItem.communication}
-                </div>
-                <div class="contact-details">${cleanItem.contactDetails}</div>
-            </td>
-            <td class="meeting-time">${cleanItem.submittedDate}</td>
-            <td class="meeting-actions">
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'connection')" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="action-btn edit-btn" onclick="event.stopPropagation(); editConnection('${cleanItem.id}')" title="Edit Connection">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Connection">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `;
+        // Check if mobile device
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            // Mobile layout - show only essential info
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
+                <td class="name-cell">
+                    <div class="mobile-connection-info">
+                        <div class="name">${cleanItem.name}</div>
+                        <div class="mobile-contact-info">
+                            <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
+                            ${cleanItem.communication}: ${cleanItem.contactDetails}
+                        </div>
+                        <div class="mobile-submitted-date">Submitted: ${cleanItem.submittedDate}</div>
+                    </div>
+                </td>
+                <td class="contact-info-cell mobile-hide">
+                    <div class="contact-method">
+                        <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
+                        ${cleanItem.communication}
+                    </div>
+                    <div class="contact-details">${cleanItem.contactDetails}</div>
+                </td>
+                <td class="meeting-time mobile-hide">${cleanItem.submittedDate}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn-small view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'connection')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn-small delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Connection">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        } else {
+            // Desktop layout - show all columns
+            return `
+            <tr class="clickable-row" data-id="${cleanItem.id}" data-type="connection">
+                <td class="name-cell">${cleanItem.name}</td>
+                <td class="contact-info-cell">
+                    <div class="contact-method">
+                        <i class="fas fa-${getCommunicationIcon(cleanItem.communication)}"></i>
+                        ${cleanItem.communication}
+                    </div>
+                    <div class="contact-details">${cleanItem.contactDetails}</div>
+                </td>
+                <td class="meeting-time">${cleanItem.submittedDate}</td>
+                <td class="meeting-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn view-btn" onclick="event.stopPropagation(); showDetailedView('${cleanItem.id}', 'connection')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" onclick="event.stopPropagation(); editConnection('${cleanItem.id}')" title="Edit Connection">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteItem('${cleanItem.id}')" title="Delete Connection">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        }
     }).join('');
 }
 
@@ -1315,6 +1515,8 @@ function setupModal() {
 }
 
 
+
+
 // Add CSS animations
 const style = document.createElement('style');
 style.textContent = `
@@ -1373,5 +1575,6 @@ style.textContent = `
         margin-bottom: var(--spacing-xs);
         line-height: 1.5;
     }
+    
 `;
 document.head.appendChild(style);

@@ -1,4 +1,4 @@
-// TESConnections - Hinge-Style Interactions
+// DMEXCO-Connections - Hinge-Style Interactions
 // 
 // WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
 // 
@@ -9,6 +9,8 @@
 const CONFIG = {
     // Working API Gateway URL
     API_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact',
+    // Secure API Key for form submissions
+    API_KEY: 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl',
     TIMEOUT: 10000, // 10 seconds
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000 // 1 second
@@ -255,6 +257,7 @@ const response = await fetch(CONFIG.API_ENDPOINT, {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
+        'X-API-Key': CONFIG.API_KEY
     },
     body: JSON.stringify(formData),
     signal: controller.signal,
@@ -292,25 +295,41 @@ throw error;
     }
 }
 
-// Communication option selection
+// Communication option selection with mobile optimization
 optionCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-// Add ripple effect
-addRippleEffect(card, e);
-// Remove selection from all cards
-optionCards.forEach(c => c.classList.remove('selected'));
-// Add selection to clicked card
-card.classList.add('selected');
-// Update hidden input
-const value = card.getAttribute('data-value');
-communicationField.value = value;
-// Clear any communication errors
-clearError('communication');
-// Add haptic feedback if available
-if (navigator.vibrate) {
-    navigator.vibrate(50);
-}
-    });
+    let isProcessing = false;
+    
+    const handleSelection = (e) => {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Add ripple effect
+        addRippleEffect(card, e);
+        // Remove selection from all cards
+        optionCards.forEach(c => c.classList.remove('selected'));
+        // Add selection to clicked card
+        card.classList.add('selected');
+        // Update hidden input
+        const value = card.getAttribute('data-value');
+        communicationField.value = value;
+        // Clear any communication errors
+        clearError('communication');
+        // Add haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        
+        // Reset processing flag after a short delay
+        setTimeout(() => {
+            isProcessing = false;
+        }, 100);
+    };
+    
+    // Use only click events for better mobile compatibility
+    card.addEventListener('click', handleSelection);
 });
 
 // Form submission
@@ -327,6 +346,20 @@ form.style.animation = 'shake 0.5s ease-in-out';
 setTimeout(() => {
     form.style.animation = '';
 }, 500);
+
+// Scroll to first error field
+setTimeout(() => {
+    const firstError = form.querySelector('.error-message:not([style*="display: none"])');
+    if (firstError) {
+        const fieldName = firstError.id.replace('Error', '');
+        const field = document.getElementById(fieldName);
+        if (field) {
+            field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            field.focus();
+        }
+    }
+}, 100);
+
 return;
     }
     
@@ -390,18 +423,14 @@ setLoadingState(false);
     }
 });
 
-// Real-time validation with smooth animations
-nameField.addEventListener('blur', () => {
-    validateField('name', nameField.value);
-});
-
+// Input formatting only (no validation)
 nameField.addEventListener('input', () => {
     // Capitalize first letter of each word
     if (nameField.value.length > 0) {
 const words = nameField.value.split(' ');
 const capitalizedWords = words.map(word => {
     if (word.length > 0) {
-word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }
     return word;
 });
@@ -410,15 +439,6 @@ if (nameField.value !== capitalizedText) {
     nameField.value = capitalizedText;
 }
     }
-    
-    if (nameError.textContent) {
-validateField('name', nameField.value);
-    }
-});
-
-
-commentsField.addEventListener('blur', () => {
-    validateField('comments', commentsField.value);
 });
 
 commentsField.addEventListener('input', () => {
@@ -430,12 +450,6 @@ const capitalizedText = firstChar.toUpperCase() + restOfText;
 if (commentsField.value !== capitalizedText) {
     commentsField.value = capitalizedText;
 }
-    }
-    
-    if (commentsField.value.length > validationRules.comments.maxLength) {
-showError('comments', validationRules.comments.message);
-    } else {
-clearError('comments');
     }
 });
 
@@ -528,50 +542,27 @@ if (focusedCard.classList.contains('option-card')) {
     }
 });
 
-// Focus management with smooth transitions
-form.addEventListener('submit', () => {
-    setTimeout(() => {
-const firstError = form.querySelector('.error-message:not([style*="display: none"])');
-if (firstError) {
-    const fieldName = firstError.id.replace('Error', '');
-    const field = document.getElementById(fieldName);
-    if (field) {
-field.focus();
-field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-    }, 100);
-});
 
 // Force input styling to stay black with white text
 function forceInputStyling() {
     const inputs = document.querySelectorAll('.form-input, .form-textarea');
     inputs.forEach(input => {
-// Force styling on various events
-const forceStyle = () => {
-    input.style.backgroundColor = '#0a0a0a';
-    input.style.color = '#ffffff';
-    input.style.background = '#0a0a0a';
-};
-// Apply on multiple events
-input.addEventListener('input', forceStyle);
-input.addEventListener('change', forceStyle);
-input.addEventListener('focus', forceStyle);
-input.addEventListener('blur', forceStyle);
-input.addEventListener('keyup', forceStyle);
-input.addEventListener('keydown', forceStyle);
-// Apply immediately
-forceStyle();
-// Use MutationObserver to catch any style changes
-const observer = new MutationObserver(() => {
-    if (input.style.backgroundColor !== '#0a0a0a' || input.style.color !== '#ffffff') {
-forceStyle();
-    }
-});
-observer.observe(input, {
-    attributes: true,
-    attributeFilter: ['style']
-});
+        // Force styling on various events
+        const forceStyle = () => {
+            input.style.backgroundColor = '#0a0a0a';
+            input.style.color = '#ffffff';
+            input.style.background = '#0a0a0a';
+        };
+        
+        // Apply immediately
+        forceStyle();
+        
+        // Apply on focus events only to avoid conflicts
+        input.addEventListener('focus', forceStyle);
+        input.addEventListener('blur', forceStyle);
+        
+        // Use a more efficient approach with CSS classes instead of MutationObserver
+        input.classList.add('force-styling');
     });
 }
 
@@ -694,7 +685,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoLabel = document.querySelector('label[for="info"]');
     if (infoLabel) {
         infoLabel.addEventListener('click', (e) => {
-            // Do not focus, open the selected app instead
             e.preventDefault();
             openSelectedContactApp();
         });

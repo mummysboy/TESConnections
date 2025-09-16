@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="/">
-    <title>TESConnections - Admin Dashboard</title>
+    <title>DMEXCO-Connections - Admin Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -17,7 +17,7 @@
             <div class="login-header">
                 <div class="logo-section">
                     <div class="logo-icon">⚡</div>
-                    <span class="logo-text">TESConnections</span>
+                    <span class="logo-text">DMEXCO-Connections</span>
                 </div>
                 <h2 class="login-title">Admin Dashboard</h2>
                 <p class="login-subtitle">Please sign in to access the admin panel</p>
@@ -27,10 +27,6 @@
                 <button id="pinLoginBtn" class="login-btn pin-login-btn">
                     <i class="fas fa-key"></i>
                     Sign In with PIN
-                </button>
-                <button id="cognitoLoginBtn" class="login-btn cognito-login-btn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Sign In with Cognito
                 </button>
             </div>
         </div>
@@ -92,7 +88,7 @@
             <div class="nav-content">
                 <div class="logo-section">
                     <div class="logo-icon">⚡</div>
-                    <span class="logo-text">TESConnections</span>
+                    <span class="logo-text">DMEXCO-Connections</span>
                 </div>
                 <div class="header-menu">
                     <div class="user-info">
@@ -171,19 +167,21 @@
                 </div>
                 
                 <div class="table-wrapper">
-                    <table class="data-table" id="meetingsTable">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>Name</th>
-                                <th>Meeting Time</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="meetingsTableBody">
-                            <!-- Meetings will be populated by JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="mobile-table-container">
+                        <table class="data-table" id="meetingsTable">
+                            <thead>
+                                <tr>
+                                    <th class="mobile-hide"></th>
+                                    <th>Name</th>
+                                    <th class="mobile-hide">Meeting Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meetingsTableBody">
+                                <!-- Meetings will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="empty-state" id="meetingsEmptyState" style="display: none;">
@@ -216,19 +214,21 @@
                 </div>
                 
                 <div class="table-wrapper">
-                    <table class="data-table" id="connectionsTable">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Contact Info</th>
-                                <th>Meeting Time</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="connectionsTableBody">
-                            <!-- Connections will be populated by JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="mobile-table-container">
+                        <table class="data-table" id="connectionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th class="mobile-hide">Contact Info</th>
+                                    <th class="mobile-hide">Meeting Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="connectionsTableBody">
+                                <!-- Connections will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="empty-state" id="connectionsEmptyState" style="display: none;">
@@ -276,7 +276,7 @@
             <div class="footer-content">
                 <div class="footer-brand">
                     <span class="footer-logo">⚡</span>
-                    <span class="footer-text">TESConnections</span>
+                    <span class="footer-text">DMEXCO-Connections</span>
                 </div>
             </div>
         </footer>

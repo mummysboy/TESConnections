@@ -1,4 +1,4 @@
-// TESConnections - Meetings Page JavaScript
+// DMEXCO-Connections - Meetings Page JavaScript
 // 
 // WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
 // 
@@ -9,6 +9,8 @@
 const CONFIG = {
     // Working API Gateway URL
     API_ENDPOINT: 'https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact',
+    // Secure API Key for form submissions
+    API_KEY: 'tes_XNuYmTQIhSA1385VaEVnfg6kRKu8TufODDYPyhazkNUzERNn673BVAkaizM9wVyl',
     TIMEOUT: 10000, // 10 seconds
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000 // 1 second
@@ -40,10 +42,8 @@ let selectedDayElement, prevDayBtn, nextDayBtn;
 // Calendar data
 const calendarData = {
     availableDates: [
-new Date(2025, 8, 12), // September 12, 2025 (month is 0-indexed)
-new Date(2025, 8, 13), // September 13, 2025
-new Date(2025, 8, 14), // September 14, 2025
-new Date(2025, 8, 15)  // September 15, 2025
+        '2025-09-17', // September 17, 2025 (Wednesday)
+        '2025-09-18'  // September 18, 2025 (Thursday)
     ],
     currentDateIndex: 0,
     selectedTimeSlot: null,
@@ -73,17 +73,28 @@ message: 'Please select a meeting time'
     }
 };
 
-// Generate time slots for a given date
-function generateTimeSlots(date) {
+// Generate time slots for a given date string
+function generateTimeSlots(dateString) {
     const slots = [];
     const startHour = 9; // 9:00 AM
     const endHour = 17; // 5:00 PM
     const interval = 15; // 15 minutes
     
+    // Validate that the date is in the allowed range
+    const allowedDates = [
+        '2025-09-17', // September 17, 2025 (Wednesday)
+        '2025-09-18'  // September 18, 2025 (Thursday)
+    ];
+    
+    // Check if the date is in the allowed range
+    if (!allowedDates.includes(dateString)) {
+        console.warn('Invalid date provided to generateTimeSlots:', dateString);
+        return [];
+    }
+    
     for (let hour = startHour; hour < endHour; hour++) {
         for (let minute = 0; minute < 60; minute += interval) {
             const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-            const dateString = date.toISOString().split('T')[0];
             const slotId = `${dateString}-${timeString}`;
             slots.push({
                 id: slotId,
@@ -97,23 +108,28 @@ function generateTimeSlots(date) {
     return slots;
 }
 
-// Format date for display
-function formatDate(date) {
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+// Format date string for display
+function formatDate(dateString) {
+    const dateMap = {
+        '2025-09-17': 'Wed, Sep 17',
+        '2025-09-18': 'Thu, Sep 18'
+    };
+    return dateMap[dateString] || dateString;
 }
 
-// Format date for day display
-function formatDayDisplay(date) {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const dayNumber = date.getDate();
-    return { dayName, dayNumber };
+// Format date string for day display
+function formatDayDisplay(dateString) {
+    const dateMap = {
+        '2025-09-17': { dayName: 'Wednesday', dayNumber: 17 },
+        '2025-09-18': { dayName: 'Thursday', dayNumber: 18 }
+    };
+    return dateMap[dateString] || { dayName: 'Unknown', dayNumber: 0 };
 }
 
 // Update day navigation display
 function updateDayDisplay() {
-    const currentDate = calendarData.availableDates[calendarData.currentDateIndex];
-    const { dayName, dayNumber } = formatDayDisplay(currentDate);
+    const currentDateString = calendarData.availableDates[calendarData.currentDateIndex];
+    const { dayName, dayNumber } = formatDayDisplay(currentDateString);
     
     selectedDayElement.innerHTML = `
 <div class="selected-day-date">${dayNumber}</div>
@@ -125,7 +141,7 @@ function updateDayDisplay() {
     nextDayBtn.disabled = calendarData.currentDateIndex === calendarData.availableDates.length - 1;
     
     // Generate time slots for current date
-    generateTimeSlotsForDate(currentDate);
+    generateTimeSlotsForDate(currentDateString);
     clearError('timeSlot');
 }
 
@@ -152,8 +168,8 @@ addRippleEffect(nextDayBtn, { clientX: nextDayBtn.offsetLeft + nextDayBtn.offset
 }
 
 // Generate time slots for selected date
-function generateTimeSlotsForDate(date) {
-    const slots = generateTimeSlots(date);
+function generateTimeSlotsForDate(dateString) {
+    const slots = generateTimeSlots(dateString);
     
     // Remove existing time slots container
     const existingContainer = document.querySelector('.time-slots-container');
@@ -168,7 +184,7 @@ existingContainer.remove();
     
     const title = document.createElement('div');
     title.className = 'time-slots-title';
-    title.textContent = `Available Times - ${formatDate(date)}`;
+    title.textContent = `Available Times - ${formatDate(dateString)}`;
     container.appendChild(title);
     
     // Separate available and booked slots
@@ -192,11 +208,16 @@ const [hours, minutes] = slot.time.split(':');
 slotElement.innerHTML = `
     <div class="time-slot-time">${slot.time}</div>
 `;
-if (!slot.booked) {
-    slotElement.addEventListener('click', () => {
-selectTimeSlot(slot);
-    });
-}
+    if (!slot.booked) {
+        const handleTimeSlotSelection = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectTimeSlot(slot);
+        };
+        
+        // Add click event for mobile support
+        slotElement.addEventListener('click', handleTimeSlotSelection);
+    }
 grid.appendChild(slotElement);
     });
     
@@ -454,6 +475,7 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-API-Key': CONFIG.API_KEY
             },
             body: JSON.stringify(formData),
             signal: controller.signal,
@@ -463,8 +485,28 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
         clearTimeout(timeoutId);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server error (${response.status}). Please try again.`);
+            let errorMessage = `Server error (${response.status}). Please try again.`;
+            
+            try {
+                const errorData = await response.json();
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (e) {
+                // If JSON parsing fails, use the text response
+                try {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                } catch (textError) {
+                    // Keep the default error message
+                }
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const result = await response.json();
@@ -496,30 +538,47 @@ const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
     }
 }
 
-// Communication option selection
+// Communication option selection with mobile optimization
 optionCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-// Add ripple effect
-addRippleEffect(card, e);
-// Remove selection from all cards
-optionCards.forEach(c => c.classList.remove('selected'));
-// Add selection to clicked card
-card.classList.add('selected');
-// Update hidden input
-const value = card.getAttribute('data-value');
-communicationField.value = value;
-// Clear any communication errors
-clearError('communication');
-// Add haptic feedback if available
-if (navigator.vibrate) {
-    navigator.vibrate(50);
-}
-    });
+    let isProcessing = false;
+    
+    const handleSelection = (e) => {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Add ripple effect
+        addRippleEffect(card, e);
+        // Remove selection from all cards
+        optionCards.forEach(c => c.classList.remove('selected'));
+        // Add selection to clicked card
+        card.classList.add('selected');
+        // Update hidden input
+        const value = card.getAttribute('data-value');
+        communicationField.value = value;
+        // Clear any communication errors
+        clearError('communication');
+        // Add haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        
+        // Reset processing flag after a short delay
+        setTimeout(() => {
+            isProcessing = false;
+        }, 100);
+    };
+    
+    // Use only click events for better mobile compatibility
+    card.addEventListener('click', handleSelection);
 });
 
-// Form submission
+// Form submission with mobile support
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     
     // Add ripple effect to submit button
     addRippleEffect(submitBtn, e);
@@ -531,6 +590,20 @@ form.style.animation = 'shake 0.5s ease-in-out';
 setTimeout(() => {
     form.style.animation = '';
 }, 500);
+
+// Scroll to first error field
+setTimeout(() => {
+    const firstError = form.querySelector('.error-message:not([style*="display: none"])');
+    if (firstError) {
+        const fieldName = firstError.id.replace('Error', '');
+        const field = document.getElementById(fieldName);
+        if (field) {
+            field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            field.focus();
+        }
+    }
+}, 100);
+
 return;
     }
     
@@ -559,8 +632,8 @@ await refreshCalendar();
 // Track successful submission
 if (typeof gtag !== 'undefined') {
     gtag('event', 'form_submit', {
-category: 'engagement',
-label: 'meeting_booking'
+        category: 'engagement',
+        label: 'meeting_booking'
     });
 }
     } catch (error) {
@@ -597,18 +670,14 @@ setLoadingState(false);
     }
 });
 
-// Real-time validation with smooth animations
-nameField.addEventListener('blur', () => {
-    validateField('name', nameField.value);
-});
-
+// Input formatting only (no validation)
 nameField.addEventListener('input', () => {
     // Capitalize first letter of each word
     if (nameField.value.length > 0) {
 const words = nameField.value.split(' ');
 const capitalizedWords = words.map(word => {
     if (word.length > 0) {
-word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }
     return word;
 });
@@ -617,16 +686,8 @@ if (nameField.value !== capitalizedText) {
     nameField.value = capitalizedText;
 }
     }
-    
-    if (nameError.textContent) {
-validateField('name', nameField.value);
-    }
 });
 
-
-commentsField.addEventListener('blur', () => {
-    validateField('comments', commentsField.value);
-});
 
 commentsField.addEventListener('input', () => {
     // Capitalize first letter
@@ -637,12 +698,6 @@ const capitalizedText = firstChar.toUpperCase() + restOfText;
 if (commentsField.value !== capitalizedText) {
     commentsField.value = capitalizedText;
 }
-    }
-    
-    if (commentsField.value.length > validationRules.comments.maxLength) {
-showError('comments', validationRules.comments.message);
-    } else {
-clearError('comments');
     }
 });
 
@@ -685,14 +740,18 @@ const aboutModal = document.getElementById('aboutModal');
 const closeModal = document.getElementById('closeModal');
 
 // Open modal when hamburger menu is clicked
-hamburgerMenu.addEventListener('click', () => {
+hamburgerMenu.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     hamburgerMenu.classList.toggle('active');
     aboutModal.classList.add('active');
     document.body.style.overflow = 'hidden';
 });
 
 // Close modal when close button is clicked
-closeModal.addEventListener('click', () => {
+closeModal.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     hamburgerMenu.classList.remove('active');
     aboutModal.classList.remove('active');
     document.body.style.overflow = '';
@@ -734,50 +793,27 @@ if (focusedCard.classList.contains('option-card')) {
     }
 });
 
-// Focus management with smooth transitions
-form.addEventListener('submit', () => {
-    setTimeout(() => {
-const firstError = form.querySelector('.error-message:not([style*="display: none"])');
-if (firstError) {
-    const fieldName = firstError.id.replace('Error', '');
-    const field = document.getElementById(fieldName);
-    if (field) {
-field.focus();
-field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-    }, 100);
-});
 
 // Force input styling to stay black with white text
 function forceInputStyling() {
     const inputs = document.querySelectorAll('.form-input, .form-textarea');
     inputs.forEach(input => {
-// Force styling on various events
-const forceStyle = () => {
-    input.style.backgroundColor = '#0a0a0a';
-    input.style.color = '#ffffff';
-    input.style.background = '#0a0a0a';
-};
-// Apply on multiple events
-input.addEventListener('input', forceStyle);
-input.addEventListener('change', forceStyle);
-input.addEventListener('focus', forceStyle);
-input.addEventListener('blur', forceStyle);
-input.addEventListener('keyup', forceStyle);
-input.addEventListener('keydown', forceStyle);
-// Apply immediately
-forceStyle();
-// Use MutationObserver to catch any style changes
-const observer = new MutationObserver(() => {
-    if (input.style.backgroundColor !== '#0a0a0a' || input.style.color !== '#ffffff') {
-forceStyle();
-    }
-});
-observer.observe(input, {
-    attributes: true,
-    attributeFilter: ['style']
-});
+        // Force styling on various events
+        const forceStyle = () => {
+            input.style.backgroundColor = '#0a0a0a';
+            input.style.color = '#ffffff';
+            input.style.background = '#0a0a0a';
+        };
+        
+        // Apply immediately
+        forceStyle();
+        
+        // Apply on focus events only to avoid conflicts
+        input.addEventListener('focus', forceStyle);
+        input.addEventListener('blur', forceStyle);
+        
+        // Use a more efficient approach with CSS classes instead of MutationObserver
+        input.classList.add('force-styling');
     });
 }
 
@@ -818,6 +854,17 @@ async function refreshCalendar() {
 
 // Initialize with smooth entrance animations
 document.addEventListener('DOMContentLoaded', async () => {
+    // Prevent context menu on long press for better mobile experience
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    
+    // Add mobile-specific optimizations
+    if ('ontouchstart' in window) {
+        // Disable hover effects on touch devices
+        document.body.classList.add('touch-device');
+    }
+    
     // Initialize calendar elements
     selectedDayElement = document.getElementById('selectedDay');
     prevDayBtn = document.getElementById('prevDay');
@@ -827,6 +874,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!selectedDayElement || !prevDayBtn || !nextDayBtn) {
 return;
     }
+    
+    // Ensure calendar starts on the first valid date (September 17, 2025)
+    calendarData.currentDateIndex = 0;
+    calendarData.selectedTimeSlot = null;
     
     // Load actual booked slots from database
     await loadBookedSlots();
@@ -838,8 +889,17 @@ return;
     updateDayDisplay();
     
     // Add event listeners for navigation buttons
-    prevDayBtn.addEventListener('click', navigateToPreviousDay);
-    nextDayBtn.addEventListener('click', navigateToNextDay);
+    prevDayBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigateToPreviousDay();
+    });
+    
+    nextDayBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigateToNextDay();
+    });
     
     // Add keyboard navigation
     document.addEventListener('keydown', (e) => {
