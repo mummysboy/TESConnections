@@ -1199,6 +1199,337 @@ input:-webkit-autofill-selected:active {
         -ms-user-select: none;
         user-select: none;
     }
+    
+    /* Enhanced Mobile Form Optimizations */
+    .form-card {
+        margin: var(--spacing-sm) var(--spacing-md);
+        padding: var(--spacing-xl);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+    }
+    
+    .form-title {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-xl);
+        text-align: center;
+    }
+    
+    .input-group {
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .input-label .label-text {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-sm);
+        display: block;
+    }
+    
+    .form-input, .form-textarea {
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        min-height: 48px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus, .form-textarea:focus {
+        border-color: var(--electric-blue);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .submit-btn {
+        min-height: 56px;
+        padding: var(--spacing-lg) var(--spacing-xl);
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-radius: var(--radius-xl);
+        margin-top: var(--spacing-xl);
+        box-shadow: var(--shadow-lg);
+        background: var(--electric-gradient);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .submit-btn:active {
+        transform: scale(0.98);
+        box-shadow: var(--shadow-md);
+    }
+    
+    /* Conference Banner Mobile Optimization */
+    .conference-banner {
+        margin: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .banner-image {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+    }
+    
+    /* Navigation Mobile Optimization */
+    .nav-header {
+        padding: var(--spacing-md) var(--spacing-lg);
+        backdrop-filter: blur(20px);
+        background: rgba(10, 10, 10, 0.9);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .logo-text {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+    
+    /* App Container Mobile Optimization */
+    .app-main {
+        padding: var(--spacing-sm) 0 var(--spacing-xl) 0;
+        min-height: calc(100vh - 80px);
+        min-height: calc(100dvh - 80px);
+    }
+    
+    /* Footer Mobile Optimization */
+    .app-footer {
+        padding: var(--spacing-lg);
+        margin-top: auto;
+        background: rgba(10, 10, 10, 0.8);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .footer-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    /* Success Card Mobile Optimization */
+    .success-card {
+        margin: var(--spacing-sm) var(--spacing-md);
+        padding: var(--spacing-xl);
+        border-radius: var(--radius-xl);
+        text-align: center;
+    }
+    
+    .success-title {
+        font-size: 1.3rem;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .success-subtitle {
+        font-size: 1rem;
+        color: var(--accent-gray);
+    }
+    
+    /* Enhanced touch feedback */
+    .option-card:active,
+    .submit-btn:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    
+    /* Mobile Calendar Optimizations */
+    .calendar-container {
+        margin-top: var(--spacing-lg);
+        padding: var(--spacing-lg);
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .calendar-header {
+        text-align: center;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .calendar-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-white);
+    }
+    
+    .day-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-lg);
+        padding: var(--spacing-md);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-lg);
+    }
+    
+    .nav-arrow {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--electric-blue);
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-arrow:active {
+        transform: scale(0.9);
+        background: rgba(59, 130, 246, 0.2);
+    }
+    
+    .selected-day {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-white);
+        text-align: center;
+        flex: 1;
+        margin: 0 var(--spacing-md);
+    }
+    
+    .time-slots-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .time-slot {
+        padding: var(--spacing-lg);
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--primary-white);
+        transition: all 0.3s ease;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .time-slot.selected {
+        border-color: var(--electric-blue);
+        background: rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    
+    .time-slot:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    
+    .time-slot.unavailable {
+        opacity: 0.4;
+        background: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.05);
+        cursor: not-allowed;
+    }
+}
+
+/* Extra Small Mobile Screens (phones in portrait) */
+@media (max-width: 480px) {
+    .form-card {
+        margin: var(--spacing-xs) var(--spacing-sm);
+        padding: var(--spacing-lg);
+    }
+    
+    .conference-banner {
+        margin: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .banner-image {
+        max-height: 150px;
+    }
+    
+    .form-title {
+        font-size: 1.3rem;
+    }
+    
+    .input-label .label-text {
+        font-size: 0.9rem;
+    }
+    
+    .form-input, .form-textarea {
+        padding: var(--spacing-md);
+        font-size: 16px;
+    }
+    
+    .communication-options {
+        gap: var(--spacing-sm);
+        padding: var(--spacing-xs);
+    }
+    
+    .option-card {
+        padding: var(--spacing-sm);
+        min-height: 70px;
+    }
+    
+    .option-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .option-text {
+        font-size: 0.75rem;
+    }
+    
+    .submit-btn {
+        min-height: 52px;
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: 1rem;
+    }
+    
+    .nav-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .logo-text {
+        font-size: 1rem;
+    }
+    
+    .calendar-container {
+        padding: var(--spacing-md);
+    }
+    
+    .day-navigation {
+        padding: var(--spacing-sm);
+    }
+    
+    .nav-arrow {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .time-slots-container {
+        gap: var(--spacing-sm);
+    }
+    
+    .time-slot {
+        padding: var(--spacing-md);
+        font-size: 0.8rem;
+        min-height: 50px;
+    }
+    
+    .success-card {
+        margin: var(--spacing-xs) var(--spacing-sm);
+        padding: var(--spacing-lg);
+    }
+    
+    .success-title {
+        font-size: 1.2rem;
+    }
+    
+    .success-subtitle {
+        font-size: 0.9rem;
+    }
 }
 
 /* Responsive Design */

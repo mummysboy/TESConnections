@@ -1,4 +1,4 @@
-// TESConnections - Meetings Page JavaScript
+// DMEXCO-Connections - Meetings Page JavaScript
 // 
 // WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
 // 

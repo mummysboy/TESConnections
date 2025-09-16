@@ -1,4 +1,4 @@
-// TESConnections - Hinge-Style Interactions
+// DMEXCO-Connections - Hinge-Style Interactions
 // 
 // WORKING API ENDPOINT: https://dkmogwhqc8.execute-api.us-west-1.amazonaws.com/prod/submit-contact
 // 

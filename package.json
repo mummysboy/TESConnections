@@ -1,13 +1,13 @@
 {
-  "name": "tes-connections",
+  "name": "dmexco-connections",
   "version": "1.0.0",
-  "description": "TESConnections landing page with AWS backend",
+  "description": "DMEXCO-Connections landing page with AWS backend",
   "main": "index.html",
   "scripts": {
     "start": "python -m http.server 8000",
     "deploy": "aws s3 sync . s3://tes-connections-website-prod-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
     "deploy-dev": "aws s3 sync . s3://tes-connections-website-dev-ACCOUNT_ID --exclude '*.md' --exclude 'node_modules/*' --exclude '.git/*'",
-    "build": "mkdir -p dist && cp index.html styles.css script.js meetings.html meetings.js admin.html admin.js admin-sample.json _redirects favicon.ico tes-affiliate-conferences-2025-568x379.jpg dist/ && mkdir -p dist/meetings dist/admin && cp meetings.html dist/meetings/index.html && cp admin.html dist/admin/index.html && cp meetings.html dist/meetings && cp admin.html dist/admin"
+    "build": "mkdir -p dist && cp index.html styles.css script.js meetings.html meetings.js admin.html admin.js admin-sample.json _redirects favicon.ico dmexco.png dist/ && mkdir -p dist/meetings dist/admin && cp meetings.html dist/meetings/index.html && cp admin.html dist/admin/index.html && cp meetings.html dist/meetings && cp admin.html dist/admin"
   },
   "keywords": [
     "landing-page",
@@ -18,17 +18,17 @@
     "hinge-style",
     "masculine-theme"
   ],
-  "author": "TESConnections Team",
+  "author": "DMEXCO-Connections Team",
   "license": "MIT",
   "devDependencies": {
     "http-server": "^14.1.1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mummysboy/TESConnections.git"
+    "url": "https://github.com/mummysboy/DMEXCO-Connections.git"
   },
   "bugs": {
-    "url": "https://github.com/mummysboy/TESConnections/issues"
+    "url": "https://github.com/mummysboy/DMEXCO-Connections/issues"
   },
-  "homepage": "https://github.com/mummysboy/TESConnections#readme"
+  "homepage": "https://github.com/mummysboy/DMEXCO-Connections#readme"
 }

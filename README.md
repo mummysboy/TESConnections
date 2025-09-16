@@ -1,4 +1,4 @@
-# TESConnections Landing Page
+# DMEXCOConnections Landing Page
 
 A mobile-first responsive landing page with Hinge-style UX and masculine theme for collecting contact information with AWS backend integration.
 
@@ -43,7 +43,7 @@ Frontend (S3) → API Gateway → Lambda → DynamoDB
 # Deploy CloudFormation stack
 aws cloudformation deploy \
   --template-file cloudformation-template.yaml \
-  --stack-name tes-connections-prod \
+  --stack-name dmexco-connections-prod \
   --parameter-overrides Environment=prod \
   --capabilities CAPABILITY_IAM
 ```
@@ -63,7 +63,7 @@ const CONFIG = {
 
 ```bash
 # Get your S3 bucket name from CloudFormation outputs
-aws s3 sync . s3://tes-connections-website-prod-YOUR-ACCOUNT-ID \
+aws s3 sync . s3://dmexco-connections-website-prod-YOUR-ACCOUNT-ID \
   --exclude '*.md' \
   --exclude 'node_modules/*' \
   --exclude '.git/*' \
