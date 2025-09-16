@@ -281,16 +281,14 @@ def validate_time_slot(time_slot):
                 year, month, day, time = parts[0], parts[1], parts[2], parts[3]
                 booking_date = datetime(int(year), int(month), int(day))
                 
-                # Check if date is in allowed range (September 12-15, 2025)
+                # Check if date is in allowed range (January 17-18, 2025)
                 allowed_dates = [
-                    datetime(2025, 9, 12),
-                    datetime(2025, 9, 13), 
-                    datetime(2025, 9, 14),
-                    datetime(2025, 9, 15)
+                    datetime(2025, 1, 17),
+                    datetime(2025, 1, 18)
                 ]
                 
                 if booking_date not in allowed_dates:
-                    return False, "Booking date not available. Only September 12-15, 2025 are available."
+                    return False, "Booking date not available. Only January 17-18, 2025 are available."
                     
                 # Validate time format
                 if ':' in time:

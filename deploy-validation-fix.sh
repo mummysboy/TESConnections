@@ -43,7 +43,7 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "🔒 Security fixes applied:"
     echo "   - Date validation now enforced on backend"
-    echo "   - Only September 12-15, 2025 bookings allowed"
+    echo "   - Only January 17-18, 2025 bookings allowed"
     echo "   - Business hours: 9:00 AM - 5:00 PM"
     echo "   - 15-minute time intervals enforced"
     echo "   - Double-booking prevention (time slots can only be booked once)"
