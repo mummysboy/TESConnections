@@ -42,8 +42,8 @@ let selectedDayElement, prevDayBtn, nextDayBtn;
 // Calendar data
 const calendarData = {
     availableDates: [
-        '2025-01-17', // January 17, 2025 (Friday)
-        '2025-01-18'  // January 18, 2025 (Saturday)
+        '2025-09-17', // September 17, 2025 (Wednesday)
+        '2025-09-18'  // September 18, 2025 (Thursday)
     ],
     currentDateIndex: 0,
     selectedTimeSlot: null,
@@ -82,8 +82,8 @@ function generateTimeSlots(dateString) {
     
     // Validate that the date is in the allowed range
     const allowedDates = [
-        '2025-01-17', // January 17, 2025 (Friday)
-        '2025-01-18'  // January 18, 2025 (Saturday)
+        '2025-09-17', // September 17, 2025 (Wednesday)
+        '2025-09-18'  // September 18, 2025 (Thursday)
     ];
     
     // Check if the date is in the allowed range
@@ -111,8 +111,8 @@ function generateTimeSlots(dateString) {
 // Format date string for display
 function formatDate(dateString) {
     const dateMap = {
-        '2025-01-17': 'Fri, Jan 17',
-        '2025-01-18': 'Sat, Jan 18'
+        '2025-09-17': 'Wed, Sep 17',
+        '2025-09-18': 'Thu, Sep 18'
     };
     return dateMap[dateString] || dateString;
 }
@@ -120,8 +120,8 @@ function formatDate(dateString) {
 // Format date string for day display
 function formatDayDisplay(dateString) {
     const dateMap = {
-        '2025-01-17': { dayName: 'Friday', dayNumber: 17 },
-        '2025-01-18': { dayName: 'Saturday', dayNumber: 18 }
+        '2025-09-17': { dayName: 'Wednesday', dayNumber: 17 },
+        '2025-09-18': { dayName: 'Thursday', dayNumber: 18 }
     };
     return dateMap[dateString] || { dayName: 'Unknown', dayNumber: 0 };
 }
@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 return;
     }
     
-    // Ensure calendar starts on the first valid date (January 17, 2025)
+    // Ensure calendar starts on the first valid date (September 17, 2025)
     calendarData.currentDateIndex = 0;
     calendarData.selectedTimeSlot = null;
     
