@@ -42,10 +42,8 @@ let selectedDayElement, prevDayBtn, nextDayBtn;
 // Calendar data
 const calendarData = {
     availableDates: [
-        '2025-09-12', // September 12, 2025 (Friday)
-        '2025-09-13', // September 13, 2025 (Saturday)
-        '2025-09-14', // September 14, 2025 (Sunday)
-        '2025-09-15'  // September 15, 2025 (Monday)
+        '2025-01-17', // January 17, 2025 (Friday)
+        '2025-01-18'  // January 18, 2025 (Saturday)
     ],
     currentDateIndex: 0,
     selectedTimeSlot: null,
@@ -84,10 +82,8 @@ function generateTimeSlots(dateString) {
     
     // Validate that the date is in the allowed range
     const allowedDates = [
-        '2025-09-12', // September 12, 2025 (Friday)
-        '2025-09-13', // September 13, 2025 (Saturday)
-        '2025-09-14', // September 14, 2025 (Sunday)
-        '2025-09-15'  // September 15, 2025 (Monday)
+        '2025-01-17', // January 17, 2025 (Friday)
+        '2025-01-18'  // January 18, 2025 (Saturday)
     ];
     
     // Check if the date is in the allowed range
@@ -115,10 +111,8 @@ function generateTimeSlots(dateString) {
 // Format date string for display
 function formatDate(dateString) {
     const dateMap = {
-        '2025-09-12': 'Fri, Sep 12',
-        '2025-09-13': 'Sat, Sep 13', 
-        '2025-09-14': 'Sun, Sep 14',
-        '2025-09-15': 'Mon, Sep 15'
+        '2025-01-17': 'Fri, Jan 17',
+        '2025-01-18': 'Sat, Jan 18'
     };
     return dateMap[dateString] || dateString;
 }
@@ -126,10 +120,8 @@ function formatDate(dateString) {
 // Format date string for day display
 function formatDayDisplay(dateString) {
     const dateMap = {
-        '2025-09-12': { dayName: 'Friday', dayNumber: 12 },
-        '2025-09-13': { dayName: 'Saturday', dayNumber: 13 },
-        '2025-09-14': { dayName: 'Sunday', dayNumber: 14 },
-        '2025-09-15': { dayName: 'Monday', dayNumber: 15 }
+        '2025-01-17': { dayName: 'Friday', dayNumber: 17 },
+        '2025-01-18': { dayName: 'Saturday', dayNumber: 18 }
     };
     return dateMap[dateString] || { dayName: 'Unknown', dayNumber: 0 };
 }
@@ -883,7 +875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 return;
     }
     
-    // Ensure calendar starts on the first valid date (September 12, 2025)
+    // Ensure calendar starts on the first valid date (January 17, 2025)
     calendarData.currentDateIndex = 0;
     calendarData.selectedTimeSlot = null;
     
